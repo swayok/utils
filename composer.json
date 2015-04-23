@@ -1,7 +1,7 @@
 {
   "name": "swayok/utils",
   "type": "library",
-  "description": "PeskyORM - annoying ORM that contains tons of exceptions and throws them when anything goes wrong",
+  "description": "Utility classes",
   "keywords": [
     "php",
     "utility",
