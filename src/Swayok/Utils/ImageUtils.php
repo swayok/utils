@@ -2,8 +2,6 @@
 
 namespace Swayok\Utils;
 
-require_once 'File.php';
-
 class ImageUtils {
 
     static public $contentTypeToExtension = array(
