@@ -1,0 +1,23 @@
+{
+  "name": "swayok/utils",
+  "type": "library",
+  "description": "PeskyORM - annoying ORM that contains tons of exceptions and throws them when anything goes wrong",
+  "keywords": [
+    "php",
+    "utility",
+    "helpers",
+    "web"
+  ],
+  "authors": [
+    {
+      "name": "Alexander Filippov"
+    }
+  ],
+  "license": "MIT",
+  "support": {
+    "issues": "https://github.com/swayok/utils/issues"
+  },
+  "autoload": {
+      "psr-0": { "Swayok": "/src" }
+  }
+}
