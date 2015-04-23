@@ -1,8 +1,6 @@
 <?php
 
-
-namespace PeskyORM\Lib;
-
+namespace Swayok\Utils;
 
 abstract class ValidateValue {
 

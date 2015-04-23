@@ -18,7 +18,7 @@
  * @license       http://www.opensource.org/licenses/mit-license.php MIT License
  */
 
-namespace PeskyORM\Lib;
+namespace Swayok\Utils;
 
 /**
  * Class used for manipulation of arrays.
@@ -41,7 +41,7 @@ class Set {
      */
     protected static function _map(&$array, $class, $primary = false) {
         if ($class === true) {
-            $out = new stdClass;
+            $out = new \stdClass();
         } else {
             $out = new $class;
         }
@@ -546,7 +546,7 @@ class Set {
         }
 
         if (is_object($data)) {
-            if (!($data instanceof ArrayAccess || $data instanceof Traversable)) {
+            if (!($data instanceof \ArrayAccess || $data instanceof \Traversable)) {
                 $data = get_object_vars($data);
             }
         }

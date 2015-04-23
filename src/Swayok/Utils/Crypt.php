@@ -1,8 +1,6 @@
 <?php
 
-namespace App\Utils;
-
-use PeskyORM\Lib\Utils;
+namespace Swayok\Utils;
 
 class Crypt {
 

@@ -18,7 +18,7 @@
  * @license       http://www.opensource.org/licenses/mit-license.php MIT License
  */
 
-namespace PeskyORM\Lib;
+namespace Swayok\Utils;
 
 /**
  * Convenience class for reading, writing and appending to files.

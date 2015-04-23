@@ -1,8 +1,6 @@
 <?php
 
-namespace PeskyORM\Lib;
-
-use PeskyORM\Lib\ValidateValue;
+namespace Swayok\Utils;
 
 class Utils {
 

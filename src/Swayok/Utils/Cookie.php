@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Utils;
+namespace Swayok\Utils;
 
 class CookieException extends \Exception {}
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace PeskyORM\Lib;
+namespace Swayok\Utils;
 
 class StringUtils {
 
