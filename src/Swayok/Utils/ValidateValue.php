@@ -39,10 +39,31 @@ abstract class ValidateValue {
         }
     }
 
-    static public function isDateTime($value) {
+    static public function isBoolean(&$value, $convert = false) {
+        if (is_bool($value)) {
+            return true;
+        } else if (is_string($value) && ($value === '1' || $value === '0')) {
+            if ($convert) {
+                $value = $value === '1';
+            }
+            return true;
+        } else if (is_int($value) && ($value === 1 || $value === 0)) {
+            if ($convert) {
+                $value = $value === 1;
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    static public function isDateTime(&$value, $convertToUnixTs = false) {
         if (ValidateValue::isInteger($value)) {
             return $value > 0;
         } else if (is_string($value) && strtotime($value) != 0) {
+            if ($convertToUnixTs) {
+                $value = strtotime($value);
+            }
             return true;
         } else {
             return false;
@@ -63,5 +84,40 @@ abstract class ValidateValue {
 
     static public function isMd5($value) {
         return is_string($value) && preg_match(self::MD5_REGEXP, $value);
+    }
+
+    static public function isJson(&$value, $decode = false) {
+        $decoded = json_decode($value, true);
+        if ($decoded !== false) {
+            if ($decode) {
+                $value = $decoded;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    static public function isPhoneNumber($value) {
+        $phoneUtil = \libphonenumber\PhoneNumberUtil::getInstance();
+        return $phoneUtil->isViablePhoneNumber($value);
+    }
+
+    static public function isInternationalPhoneNumber(&$value, $convertToInternational = false) {
+        $phoneUtil = \libphonenumber\PhoneNumberUtil::getInstance();
+        if ($phoneUtil->isViablePhoneNumber($value)) {
+            try {
+                $phoneNumber = $phoneUtil->parse($value, null);
+                if (!$phoneUtil->isValidNumber($phoneNumber)) {
+                    return false;
+                }
+                if ($convertToInternational) {
+                    $value = $phoneUtil->format($phoneNumber, \libphonenumber\PhoneNumberFormat::E164);
+                }
+                return true;
+            } catch (\libphonenumber\NumberParseException $exc) {
+                return false;
+            }
+        }
+        return false;
     }
 }
