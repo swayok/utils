@@ -3,7 +3,7 @@
 namespace Swayok\Utils;
 
 // regions and currencies
-class Localisation {
+class Localization {
 
     const RUSSIAN = 'ru';
     const ENGLISH = 'en';
@@ -122,4 +122,4 @@ class Localisation {
         }
     }
 }
-Localisation::getSystemLanguage(); //< detect system language
+Localization::getSystemLanguage(); //< detect system language

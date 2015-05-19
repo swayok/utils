@@ -143,15 +143,13 @@ class File {
     /**
      * @param string $path
      * @param array|object|string $data
-     * @param string|int|bool $permissions
+     * @param bool $create
+     * @param int $folderPermissions
+     * @param int $filePermissions
      * @return bool
      */
-    static public function saveJson($path, $data, $permissions = false) {
-        $ret = self::load($path)->write(json_encode($data), 'w');
-        if ($ret && $permissions) {
-            self::lastLoaded()->chmod($permissions);
-        }
-        return $ret;
+    static public function saveJson($path, $data, $create = true, $folderPermissions = 0777, $filePermissions = 0666) {
+        return self::load($path, $create, $folderPermissions, $filePermissions)->write(json_encode($data), 'w');
     }
 
     /**
