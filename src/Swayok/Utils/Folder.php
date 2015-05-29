@@ -109,6 +109,12 @@ class Folder {
      */
     static protected $lastLoadedDir = null;
 
+    /**
+     * @param bool $path
+     * @param bool $create
+     * @param bool $mode
+     * @return Folder
+     */
     static public function load($path = false, $create = false, $mode = false) {
         if (!empty($path)) {
             self::$lastLoadedDir = new Folder($path, $create, $mode);
