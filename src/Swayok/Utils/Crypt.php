@@ -158,8 +158,6 @@ class Crypt {
         $ivSize = mcrypt_get_iv_size($algorithm, $mode);
         $iv = substr($text, 0, $ivSize);
         if ($ivSize + 2 >= strlen($text)) {
-//            \Db\Model\AppModel::IntruderModel()->report();
-//            throw new HackAttemptException(); //< definitely hack
             throw new \Exception('Hack attempt via encrypted cookie');
         }
         $text = substr($text, $ivSize + 2);
