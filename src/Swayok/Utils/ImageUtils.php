@@ -16,16 +16,6 @@ class ImageUtils {
 //        "image/bmp" => "bmp",
     );
 
-    static public $originalFileNameSuffix = '';
-
-    /**
-     * @param $fileName
-     * @return string
-     */
-    static public function getOriginalFileName($fileName) {
-        return $fileName . self::$originalFileNameSuffix;
-    }
-
     /**
      * @return ImageVersionConfig
      * @throws Exception\ImageVersionConfigException
@@ -41,20 +31,20 @@ class ImageUtils {
 
     /**
      * Save uploaded image ($fileInfo) and create several resized versions ($resizeProfiles)
-     * @param array $fileInfo - data from $_FILES
+     * @param array $uploadedFileInfo - data from $_FILES
      * @param string $imagesPath - folder to save images in
-     * @param string $fileName - base file name (used as prefix for resized file name)
+     * @param string $baseFileNameWithoutExtension - base file name (used as prefix for resized file name)
      * @param ImageVersionConfig[] $imageVersionsConfigs - set of resize settings
      * @return array - false: file's content type not supported | true: saved & resized
      * @throws ImageUtilsException
      */
-    static public function resize(array $fileInfo, $imagesPath, $fileName, array $imageVersionsConfigs) {
-        $contentType = self::getContentTypeForUploadedFile($fileInfo);
-        if (!self::isContentTypeSupported($contentType) || empty($imagesPath) || empty($fileName)) {
+    static public function resize(array $uploadedFileInfo, $imagesPath, $baseFileNameWithoutExtension, array $imageVersionsConfigs) {
+        $contentType = self::getContentTypeForUploadedFile($uploadedFileInfo);
+        if (!self::isContentTypeSupported($contentType) || empty($imagesPath) || empty($baseFileNameWithoutExtension)) {
             throw new ImageUtilsException('Uploaded image type is not supported', 403);
         }
         if (is_dir($imagesPath)) {
-            self::deleteExistingFiles($imagesPath, self::getFileNamesRegexp($fileName));
+            self::deleteExistingFiles($imagesPath, self::getFileNamesRegexp($baseFileNameWithoutExtension));
         } else {
             Folder::add($imagesPath, 0777);
         }
@@ -64,21 +54,20 @@ class ImageUtils {
         } else {
             $originalFileResizeConfig = $imageVersionsConfigs[ImageVersionConfig::SOURCE_VERSION_NAME];
         }
-        $originalFileName = self::getOriginalFileName($fileName);
-        $originalFileName .= self::applyResize(
-            $fileInfo['tmp_name'],
-            $imagesPath . $originalFileName,
+        $originalFileName = $baseFileNameWithoutExtension . self::applyResize(
+            $uploadedFileInfo['tmp_name'],
+            $imagesPath . $baseFileNameWithoutExtension,
             $originalFileResizeConfig,
             $contentType
         );
-        @File::remove($fileInfo['tmp_name']); //< remove temp file and use original file
+        @File::remove($uploadedFileInfo['tmp_name']); //< remove temp file and use original file
         $filesNames = array(
             ImageVersionConfig::SOURCE_VERSION_NAME => $originalFileName,
         );
         // save other file versions
         foreach ($imageVersionsConfigs as $versionName => $resizeSettings) {
             if ($versionName !== ImageVersionConfig::SOURCE_VERSION_NAME) {
-                $newFileName = $fileName . $resizeSettings->getFileNameSuffix($versionName);
+                $newFileName = $baseFileNameWithoutExtension . $resizeSettings->getFileNameSuffix($versionName);
                 $ext = self::applyResize(
                     $imagesPath . $originalFileName,
                     $imagesPath . $newFileName,
@@ -389,7 +378,7 @@ class ImageUtils {
      * @return bool|string - false: fail | string: created file path
      */
     static public function restoreVersion($fileNameToRestore, $baseFileName, $imagesPath, array $imageVersionsConfigs) {
-        $originalFileName = self::getOriginalFileName($baseFileName);
+        $originalFileName = $baseFileName;
         $ext = self::findFileExtension($imagesPath, $originalFileName);
         if ($ext) {
             $originalFileName .= '.' . $ext;
@@ -423,11 +412,11 @@ class ImageUtils {
      * @return array
      */
     static public function getVersionsUrls($imagesPath, $imagesBaseUrl, $fileName, array $imageVersionsConfigs) {
-        $originalFileName = self::getOriginalFileName($fileName);
+        $originalFileName = $fileName;
         $ext = self::findFileExtension($imagesPath, $originalFileName);
-        $result = array('original' => $imagesBaseUrl . $originalFileName);
+        $result = array(ImageVersionConfig::SOURCE_VERSION_NAME => $imagesBaseUrl . $originalFileName);
         if ($ext) {
-            $result['original'] .= '.' . $ext;
+            $result[ImageVersionConfig::SOURCE_VERSION_NAME] .= '.' . $ext;
         }
         foreach ($imageVersionsConfigs as $versionName => $imageVersionConfig) {
             $profileExt = $imageVersionConfig->isContentTypeConvertRequired()
@@ -449,11 +438,11 @@ class ImageUtils {
      * @return array
      */
     static public function getVersionsPaths($imagesPath, $fileName, array $imageVersionsConfigs) {
-        $originalFileName = self::getOriginalFileName($fileName);
+        $originalFileName = $fileName;
         $ext = self::findFileExtension($imagesPath, $originalFileName);
-        $result = array('original' => '');
+        $result = array(ImageVersionConfig::SOURCE_VERSION_NAME => '');
         if ($ext) {
-            $result['original'] = $imagesPath . $originalFileName . '.' . $ext;
+            $result[ImageVersionConfig::SOURCE_VERSION_NAME] = $imagesPath . $originalFileName . '.' . $ext;
         }
         foreach ($imageVersionsConfigs as $versionName => $imageVersionConfig) {
             $profileExt = $imageVersionConfig->isContentTypeConvertRequired()
@@ -489,7 +478,7 @@ class ImageUtils {
      * @return string
      */
     static public function getFileNamesRegexp($fileName) {
-        return "%^($fileName-.*?(\d+)x(\d+)|" . self::getOriginalFileName($fileName) . ')%is';
+        return "%^($fileName-.*?(\d+)x(\d+)|" . $fileName . ')%is';
     }
 
 }
