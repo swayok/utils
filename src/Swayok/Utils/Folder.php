@@ -537,7 +537,7 @@ class Folder {
             $this->_errors[] = sprintf('%s is a file', $pathname);
             return false;
         }
-        $pathname = rtrim($pathname, DIRECTORY_SEPARATOR);
+        $pathname = rtrim(preg_replace('%[/\\\]%', DIRECTORY_SEPARATOR, $pathname), DIRECTORY_SEPARATOR);
         $nextPathname = substr($pathname, 0, strrpos($pathname, DIRECTORY_SEPARATOR));
 
         if ($this->create($nextPathname, $mode)) {
