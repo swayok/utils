@@ -396,11 +396,35 @@ class ImageUtils {
                             $contentType
                         );
                     }
-                    return $imagesPath . $versionFileName . '.' . $ext;
+                    return $imagesPath . $versionFileName . '.' . ltrim($ext, '.');
                 }
             }
         }
         return false;
+    }
+
+    /**
+     * @param ImageVersionConfig $versionConfig
+     * @param string $baseFileName
+     * @param string $imagesPath
+     * @param null|string $fileExtension
+     * @return string
+     */
+    static public function restoreVersionForConfig($versionName, ImageVersionConfig $versionConfig, $baseFileName, $imagesPath, $fileExtension = null) {
+        $extToContentType = array_flip(self::$contentTypeToExtension);
+        if (!$fileExtension) {
+            $contentType = $versionConfig->getContentTypeToConvertTo();
+        } else {
+            $contentType = $extToContentType[$fileExtension];
+        }
+        $versionFileName = $baseFileName . $versionConfig->getFileNameSuffix($versionName);
+        $ext = self::applyResize(
+            $imagesPath . $baseFileName . '.' . self::findFileExtension($imagesPath, $baseFileName),
+            $imagesPath . $versionFileName,
+            $versionConfig,
+            $contentType
+        );
+        return $imagesPath . $versionFileName . $ext;
     }
 
     /**
