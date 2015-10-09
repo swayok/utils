@@ -597,6 +597,46 @@ class Set {
     }
 
     /**
+     * Collapses a multi-dimensional array into a single dimension, using a delimited array path for
+     * each array element's key, i.e. array(array('Foo' => array('Bar' => 'Far'))) becomes
+     * array('0.Foo.Bar' => 'Far').)
+     *
+     * @param array $data Array to flatten
+     * @param string $separator String used to separate array key elements in a path, defaults to '.'
+     * @return array
+     * @link http://book.cakephp.org/2.0/en/core-utility-libraries/hash.html#Hash::flatten
+     */
+    public static function flatten(array $data, $separator = '.') {
+        $result = array();
+        $stack = array();
+        $path = null;
+
+        reset($data);
+        while (!empty($data)) {
+            $key = key($data);
+            $element = $data[$key];
+            unset($data[$key]);
+
+            if (is_array($element) && !empty($element)) {
+                if (!empty($data)) {
+                    $stack[] = array($data, $path);
+                }
+                $data = $element;
+                reset($data);
+                $path .= $key . $separator;
+            } else {
+                $result[$path . $key] = $element;
+            }
+
+            if (empty($data) && !empty($stack)) {
+                list($data, $path) = array_pop($stack);
+                reset($data);
+            }
+        }
+        return $result;
+    }
+
+    /**
      * Flattens an array for sorting
      *
      * @param array $results
