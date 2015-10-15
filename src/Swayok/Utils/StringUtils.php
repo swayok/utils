@@ -185,13 +185,14 @@ class StringUtils {
      */
     static public function underscore($camelCasedWord) {
         return strtolower(preg_replace(
-            array('/\s+/',  '/(?<=\\w)([A-Z])/',    '/_+/'),
-            array('_',      '_\\1',                 '_'),
+            array('/\s+/', '/(?<=\\w)([A-Z])/', '/_+/'),
+            array('_', '_\\1', '_'),
             $camelCasedWord
         ));
     }
 
     protected static $_cache = array();
+
     /**
      * Cache inflected values, and return if already available
      *
@@ -394,9 +395,38 @@ class StringUtils {
         return $word;
     }
 
+    /**
+     * Select proper variant for $number (RU locale)
+     * @param int $number
+     * @param array $endingsFor_1_4_5 - array with 3 values:
+     *      array(0 => 'variant for 1', 1 => 'variant for 4', 2 => 'variant for 5')
+     * @return string
+     */
+    static public function pluralizeRu($number, $endingsFor_1_4_5) {
+        $number = $number % 100;
+        if ($number >= 11 && $number <= 19) {
+            $ending = $endingsFor_1_4_5[2];
+        } else {
+            $i = $number % 10;
+            switch ($i) {
+                case 1:
+                    $ending = $endingsFor_1_4_5[0];
+                    break;
+                case 2:
+                case 3:
+                case 4:
+                    $ending = $endingsFor_1_4_5[1];
+                    break;
+                default:
+                    $ending = $endingsFor_1_4_5[2];
+            }
+        }
+        return $ending;
+    }
+
     static public function transliterate($string) {
-        $roman = array("Sch","sch",'Yo','Zh','Kh','Ts','Ch','Sh','Yu','ya','Ya','yo','zh','kh','ts','ch','sh','yu','ya','A','B','V','G','D','E','Z','I','Y','K','L','M','N','O','P','R','S','T','U','F','','Y','','E','a','b','v','g','d','e','z','i','y','k','l','m','n','o','p','r','s','t','u','f','','y','','e');
-        $cyrillic = array("Щ","щ",'Ё','Ж','Х','Ц','Ч','Ш','Ю','я','Я','ё','ж','х','ц','ч','ш','ю','я','А','Б','В','Г','Д','Е','З','И','Й','К','Л','М','Н','О','П','Р','С','Т','У','Ф','Ь','Ы','Ъ','Э','а','б','в','г','д','е','з','и','й','к','л','м','н','о','п','р','с','т','у','ф','ь','ы','ъ','э');
+        $roman = array("Sch", "sch", 'Yo', 'Zh', 'Kh', 'Ts', 'Ch', 'Sh', 'Yu', 'ya', 'Ya', 'yo', 'zh', 'kh', 'ts', 'ch', 'sh', 'yu', 'ya', 'A', 'B', 'V', 'G', 'D', 'E', 'Z', 'I', 'Y', 'K', 'L', 'M', 'N', 'O', 'P', 'R', 'S', 'T', 'U', 'F', '', 'Y', '', 'E', 'a', 'b', 'v', 'g', 'd', 'e', 'z', 'i', 'y', 'k', 'l', 'm', 'n', 'o', 'p', 'r', 's', 't', 'u', 'f', '', 'y', '', 'e');
+        $cyrillic = array("Щ", "щ", 'Ё', 'Ж', 'Х', 'Ц', 'Ч', 'Ш', 'Ю', 'я', 'Я', 'ё', 'ж', 'х', 'ц', 'ч', 'ш', 'ю', 'я', 'А', 'Б', 'В', 'Г', 'Д', 'Е', 'З', 'И', 'Й', 'К', 'Л', 'М', 'Н', 'О', 'П', 'Р', 'С', 'Т', 'У', 'Ф', 'Ь', 'Ы', 'Ъ', 'Э', 'а', 'б', 'в', 'г', 'д', 'е', 'з', 'и', 'й', 'к', 'л', 'м', 'н', 'о', 'п', 'р', 'с', 'т', 'у', 'ф', 'ь', 'ы', 'ъ', 'э');
         return str_replace($cyrillic, $roman, $string);
     }
 
