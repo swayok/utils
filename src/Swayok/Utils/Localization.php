@@ -49,13 +49,14 @@ class Localization {
     /**
      * Detect language using info received from browser ($_COOKIE['lang'] or $_SERVER['HTTP_ACCEPT_LANGUAGE'])
      * @param bool $ignoreSignTest - true: will ignore !empty($_GET['sign']) test
+     * @param bool $ignoreCookies
      * @return string
      */
-    static public function detectBrowserLanguage($ignoreSignTest = false) {
+    static public function detectBrowserLanguage($ignoreSignTest = false, $ignoreCookies = false) {
         if (!$ignoreSignTest && !empty($_GET['sign'])) {
             return self::MOBILE_APP_LANGUAGE;
         }
-        if (Cookie::exists('lang') && strlen(Cookie::get('lang')) == 2) {
+        if (!$ignoreCookies && Cookie::exists('lang') && strlen(Cookie::get('lang')) == 2) {
             return strtolower(Cookie::get('lang'));
         } else if (
             isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])
