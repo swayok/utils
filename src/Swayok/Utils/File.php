@@ -149,7 +149,8 @@ class File {
      * @return bool
      */
     static public function saveJson($path, $data, $create = true, $folderPermissions = 0777, $filePermissions = 0666) {
-        return self::load($path, $create, $folderPermissions, $filePermissions)->write(json_encode($data), 'w');
+        return self::load($path, $create, $folderPermissions, $filePermissions)
+            ->write(Utils::jsonEncodeCyrillic($data), 'w');
     }
 
     /**
