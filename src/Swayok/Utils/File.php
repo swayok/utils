@@ -1413,7 +1413,7 @@ class File {
             "zmm"			=>	"application/vnd.handheld-entertainment+xml"
         );
 
-        $extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+        $extension = strtolower(pathinfo($this->pwd(), PATHINFO_EXTENSION));
 
         if (isset($mime_type[$extension])) {
             return $mime_type[$extension];
