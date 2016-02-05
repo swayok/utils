@@ -810,6 +810,9 @@ class Set {
      * @return mixed the value at the specified position or null if it doesn't exist
      */
     public static function get($input, $path = null, $default = null) {
+        if (empty($path)) {
+            return $input;
+        }
         if (is_string($path)) {
             if (strpos($path, '/') !== false) {
                 $keys = explode('/', trim($path, '/'));
@@ -822,12 +825,7 @@ class Set {
         if (empty($input)) {
             return $default;
         }
-        if (is_string($keys) || is_numeric($keys)) {
-            $parts = explode('.', $keys);
-        } else {
-            $parts = $keys;
-        }
-        foreach ($parts as $key) {
+        foreach ($keys as $key) {
             if (is_array($input) && isset($input[$key])) {
                 $input =& $input[$key];
             } else {
