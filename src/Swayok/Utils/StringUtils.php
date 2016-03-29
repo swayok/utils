@@ -71,7 +71,7 @@ class StringUtils {
         }
         $dataReplacements = array_combine($hashKeys, array_values($data));
         foreach ($dataReplacements as $tmpHash => $tmpValue) {
-            if (is_array($tmpValue) || is_object($tmpValue) || is_callable($tmpValue)) {
+            if (is_array($tmpValue) || is_object($tmpValue) || (!is_string($tmpValue) && is_callable($tmpValue))) {
                 $tmpValue = '';
             } else if (is_bool($tmpValue)) {
                 $tmpValue = $tmpValue ? '1' : '0';
