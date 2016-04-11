@@ -45,14 +45,22 @@ abstract class Curl {
      * @return array
      */
     static public function curlExec($url, $postData = null, $options = false, $close = true) {
-        $curl = self::curlPrepare($url, $options);
-        if (!empty($postData)) {
-            curl_setopt($curl, CURLOPT_POST, true);
-            curl_setopt($curl, CURLOPT_POSTFIELDS, $postData);
-        } else {
-            curl_setopt($curl, CURLOPT_POSTFIELDS, array());
-            curl_setopt($curl, CURLOPT_POST, false);
+        if (!is_array($options)) {
+            $options = [];
         }
+        /** @var array $options */
+        if (!empty($postData)) {
+            $options[CURLOPT_POST] = true;
+            $options[CURLOPT_POSTFIELDS] = $postData;
+        } else {
+            if (!array_key_exists(CURLOPT_POST, $options)) {
+                $options[CURLOPT_POST] = false;
+            }
+            if (!array_key_exists(CURLOPT_POSTFIELDS, $options)) {
+                $options[CURLOPT_POSTFIELDS] = array();
+            }
+        }
+        $curl = self::curlPrepare($url, $options);
         $response = curl_exec($curl);
         $code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
         $curlError = curl_errno($curl) ? curl_error($curl) : false;
