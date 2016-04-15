@@ -56,8 +56,8 @@ abstract class Curl {
             if (!array_key_exists(CURLOPT_POST, $options)) {
                 $options[CURLOPT_POST] = false;
             }
-            if (!array_key_exists(CURLOPT_POSTFIELDS, $options)) {
-                $options[CURLOPT_POSTFIELDS] = array();
+            if (!array_key_exists(CURLOPT_POSTFIELDS, $options) && empty($options[CURLOPT_POST])) {
+                unset($options[CURLOPT_POSTFIELDS]); //< it seems that it is enough to set this to option to send post request
             }
         }
         $curl = self::curlPrepare($url, $options);
