@@ -13,12 +13,26 @@ class Utils {
         return $ret;
     }
 
-    static public function getBackTrace($returnString = false, $printObjects = false, $htmlFormat = true) {
+    /**
+     * @param bool $returnString
+     * @param bool $printObjects
+     * @param bool $htmlFormat
+     * @param int $ignoreSomeLastTraces - ignore some traqces in the end (by default = 1 to ignore trace of this method)
+     * @return array|string
+     */
+    static public function getBackTrace(
+        $returnString = false,
+        $printObjects = false,
+        $htmlFormat = true,
+        $ignoreSomeLastTraces = 1
+    ) {
         $debug = debug_backtrace($printObjects);
         $ret = array();
-        $log = array();
         $file = 'unknown';
         $lineNum = '?';
+        if ($ignoreSomeLastTraces) {
+            $debug = array_slice($debug, 0, -$ignoreSomeLastTraces);
+        }
         foreach ($debug as $index => $line) {
             if (!isset($line['file'])) {
                 $line['file'] = '(probably) ' . $file;
