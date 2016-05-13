@@ -408,7 +408,7 @@ class ImageUtils {
      * @param string $baseFileName
      * @param string $imagesPath
      * @param null|string $fileExtension
-     * @return string
+     * @return string|bool - false - source file not exists
      */
     static public function restoreVersionForConfig($versionName, ImageVersionConfig $versionConfig, $baseFileName, $imagesPath, $fileExtension = null) {
         $extToContentType = array_flip(self::$contentTypeToExtension);
@@ -418,6 +418,10 @@ class ImageUtils {
             $contentType = $extToContentType[$fileExtension];
         }
         $versionFileName = $baseFileName . $versionConfig->getFileNameSuffix($versionName);
+        $srcFile = $imagesPath . $baseFileName . '.' . self::findFileExtension($imagesPath, $baseFileName);
+        if (!File::exist($srcFile)) {
+            return false;
+        }
         $ext = self::applyResize(
             $imagesPath . $baseFileName . '.' . self::findFileExtension($imagesPath, $baseFileName),
             $imagesPath . $versionFileName,
