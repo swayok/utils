@@ -11,6 +11,13 @@ abstract class ValidateValue {
     const EMAIL_REGEXP = "%^[a-z0-9!#\$\%&'*+/=?\^_`{|}~-]+(?:\.[a-z0-9!#\$\%&'*+/=?\^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$%i"; //< http://www.regular-expressions.info/email.html
     const SHA1_REGEXP = "%^[a-fA-F0-9]{40}$%i";
     const MD5_REGEXP = "%^[a-fA-F0-9]{32}$%i";
+    static protected $imageTypes = [
+        'jpg' => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
+        'png' => 'image/png',
+        'gif' => 'image/gif',
+        'svg' => 'image/svg'
+    ];
 
     static public function isInteger(&$value, $convert = false) {
         if (is_int($value)){
@@ -94,6 +101,51 @@ abstract class ValidateValue {
             return true;
         }
         return false;
+    }
+
+    static public function isUploadedFile($value) {
+        if (is_array($value)) {
+            return (
+                array_key_exists('error', $value) && $value['error'] === UPLOAD_ERR_OK
+                && !empty($value['size'])
+                && array_key_exists('tmp_name', $value)
+            );
+        } else if (is_object($value) && get_class($value) === '\Symfony\Component\HttpFoundation\File\UploadedFile') {
+            /** @var \Symfony\Component\HttpFoundation\File\UploadedFile $value */
+            return $value->isValid();
+        }
+        return false;
+    }
+
+    static public function isUploadedImage($value) {
+        if (static::isUploadedFile($value)) {
+            if (is_array($value)) {
+                $extRegexp = implode('|', array_keys(static::$imageTypes));
+                return preg_match("%^.+\.($extRegexp)$%i", $value['name']) > 0;
+            } else if (is_object($value)) {
+                /** @var \Symfony\Component\HttpFoundation\File\UploadedFile $value */
+                $mime = $value->getMimeType();
+                if ($mime) {
+                    return in_array($mime, static::$imageTypes, true);
+                } else {
+                    return in_array($value->getExtension(), array_keys(static::$imageTypes), true);
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * $value must be in format: hh:mm or integer.
+     * Range actually should be between -12:00 and +14:00 but it is not validated
+     * @param string $value
+     * @return bool
+     */
+    static public function isTimezoneOffset($value) {
+        return (
+            static::isInteger($value)
+            || is_string($value) && preg_match('%^(-|+)?([0-1]\d|2[0-4]):[0-5]\d$%', $value)
+        );
     }
 
     static public function isPhoneNumber($value) {
