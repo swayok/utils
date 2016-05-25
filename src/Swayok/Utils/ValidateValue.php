@@ -4,21 +4,20 @@ namespace Swayok\Utils;
 
 abstract class ValidateValue {
 
-    const INTEGER_REGEXP = '%^-?\d+$%is';
-    const FLOAT_REGEXP = '%^-?\d+(\.\d+)?$%is';
-    const IP_ADDRESS_REGEXP = '%^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$%is';
-    //    const EMAIL_REGEXP = '%^(([^<>()\[\].,;:\s@"*\'#$\%\^&=+\\\/!\?]+(\.[^<>()\[\],;:\s@"*\'#$\%\^&=+\\\/!\?]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$%is';
-    const EMAIL_REGEXP = "%^[a-z0-9!#\$\%&'*+/=?\^_`{|}~-]+(?:\.[a-z0-9!#\$\%&'*+/=?\^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$%is"; //< http://www.regular-expressions.info/email.html
-    const SHA1_REGEXP = "%^[a-fA-F0-9]{40}$%is";
-    const MD5_REGEXP = "%^[a-fA-F0-9]{32}$%is";
-    const DB_ENTITY_NAME_REGEXP = '%^[a-z][a-z0-9_]*$%';
+    const INTEGER_REGEXP = '%^-?\d+$%i';
+    const FLOAT_REGEXP = '%^-?\d+(\.\d+)?$%i';
+    const IP_ADDRESS_REGEXP = '%^(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)$%i';
+    //    const EMAIL_REGEXP = '%^(([^<>()\[\].,;:\s@"*\'#$\%\^&=+\\\/!\?]+(\.[^<>()\[\],;:\s@"*\'#$\%\^&=+\\\/!\?]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$%i';
+    const EMAIL_REGEXP = "%^[a-z0-9!#\$\%&'*+/=?\^_`{|}~-]+(?:\.[a-z0-9!#\$\%&'*+/=?\^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$%i"; //< http://www.regular-expressions.info/email.html
+    const SHA1_REGEXP = "%^[a-fA-F0-9]{40}$%i";
+    const MD5_REGEXP = "%^[a-fA-F0-9]{32}$%i";
 
     static public function isInteger(&$value, $convert = false) {
         if (is_int($value)){
             return true;
         } else if (is_string($value) && preg_match(self::INTEGER_REGEXP, $value)) {
             if ($convert) {
-                $value = intval($value);
+                $value = (int)$value;
             }
             return true;
         } else {
@@ -31,7 +30,7 @@ abstract class ValidateValue {
             return true;
         } else if (is_string($value) && preg_match(self::FLOAT_REGEXP, $value)) {
             if ($convert) {
-                $value = floatval($value);
+                $value = (float)$value;
             }
             return true;
         } else {
@@ -60,7 +59,7 @@ abstract class ValidateValue {
     static public function isDateTime(&$value, $convertToUnixTs = false) {
         if (ValidateValue::isInteger($value)) {
             return $value > 0;
-        } else if (is_string($value) && strtotime($value) != 0) {
+        } else if (is_string($value) && strtotime($value) !== 0) {
             if ($convertToUnixTs) {
                 $value = strtotime($value);
             }
