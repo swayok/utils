@@ -48,7 +48,4 @@ abstract class NormalizeValue {
         }
     }
 
-    static public function normalizeFile($value) {
-        return $value instanceof \SplFileInfo ? $value : new \SplFileInfo($value['tmp_name']);
-    }
 }
