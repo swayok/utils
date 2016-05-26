@@ -11,6 +11,10 @@ abstract class ValidateValue {
     const EMAIL_REGEXP = "%^[a-z0-9!#\$\%&'*+/=?\^_`{|}~-]+(?:\.[a-z0-9!#\$\%&'*+/=?\^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$%i"; //< http://www.regular-expressions.info/email.html
     const SHA1_REGEXP = "%^[a-fA-F0-9]{40}$%i";
     const MD5_REGEXP = "%^[a-fA-F0-9]{32}$%i";
+    const DATE_FORMAT = 'Y-m-d';
+    const TIME_FORMAT = 'H:i:s';
+    const DATETIME_FORMAT = 'Y-m-d H:i:s';
+    const DATETIME_WITH_TZ_FORMAT = 'Y-m-d H:i:s P';
     static protected $imageTypes = [
         'jpg' => 'image/jpeg',
         'jpeg' => 'image/jpeg',
@@ -76,6 +80,14 @@ abstract class ValidateValue {
         }
     }
 
+    static public function isDateTimeWithTz($value) {
+        if (is_string($value) && strtotime($value) !== 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     static public function isIpAddress($value) {
         return is_string($value) && preg_match(self::IP_ADDRESS_REGEXP, $value);
     }
@@ -109,6 +121,7 @@ abstract class ValidateValue {
                 array_key_exists('error', $value) && $value['error'] === UPLOAD_ERR_OK
                 && !empty($value['size'])
                 && array_key_exists('tmp_name', $value)
+                && is_uploaded_file($value['tmp_name'])
             );
         } else if (is_object($value) && get_class($value) === '\Symfony\Component\HttpFoundation\File\UploadedFile') {
             /** @var \Symfony\Component\HttpFoundation\File\UploadedFile $value */
