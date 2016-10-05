@@ -36,8 +36,8 @@ abstract class NormalizeValue {
         return date(static::DATETIME_FORMAT, is_numeric($value) ? $value : strtotime($value));
     }
 
-    static public function normalizeTimezoneOffset($value) {
-        return is_numeric($value) ? (int)$value : strtotime($value);
+    static public function normalizeDateTimeWithTz($value) {
+        return date(static::DATETIME_WITH_TZ_FORMAT, is_numeric($value) ? $value : strtotime($value));
     }
 
     static public function normalizeJson($value) {
