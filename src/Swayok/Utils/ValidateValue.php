@@ -4,7 +4,7 @@ namespace Swayok\Utils;
 
 abstract class ValidateValue {
 
-    const INTEGER_REGEXP = '%^-?\d+$%i';
+    const INTEGER_REGEXP = '%^-?\d+(\.0+)?$%i';
     const FLOAT_REGEXP = '%^-?\d+(\.\d+)?$%i';
     const IP_ADDRESS_REGEXP = '%^(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)$%i';
     //    const EMAIL_REGEXP = '%^(([^<>()\[\].,;:\s@"*\'#$\%\^&=+\\\/!\?]+(\.[^<>()\[\],;:\s@"*\'#$\%\^&=+\\\/!\?]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$%i';
@@ -26,7 +26,7 @@ abstract class ValidateValue {
     static public function isInteger(&$value, $convert = false) {
         if (is_int($value)){
             return true;
-        } else if (is_string($value) && preg_match(self::INTEGER_REGEXP, $value)) {
+        } else if ((is_string($value) || is_numeric($value)) && preg_match(self::INTEGER_REGEXP, (string)$value)) {
             if ($convert) {
                 $value = (int)$value;
             }
