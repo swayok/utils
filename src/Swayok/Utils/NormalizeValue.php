@@ -12,8 +12,13 @@ abstract class NormalizeValue {
     const DATETIME_FORMAT = 'Y-m-d H:i:s';
     const DATETIME_WITH_TZ_FORMAT = 'Y-m-d H:i:s P';
 
-    static public function normalizeBoolean($value) {
-        return !in_array($value, [false, '0', 0], true);
+    /**
+     * @param mixed $value
+     * @param array $additionalFalseOptions - for example: ['n', 'no']
+     * @return bool - false: value equals one of false, '0', 0 or $additionalFalseOptions; true: otherwise
+     */
+    static public function normalizeBoolean($value, array $additionalFalseOptions = []) {
+        return !in_array($value, array_merge([false, '0', 0], $additionalFalseOptions), true);
     }
 
     static public function normalizeInteger($value) {

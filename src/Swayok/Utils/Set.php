@@ -740,64 +740,38 @@ class Set {
      * Takes in a flat array and returns a nested array
      *
      * @param mixed $data
-     * @param array $options Options are:
-     *      children   - the key name to use in the resultset for children
-     *      idPath     - the path to a key that identifies each entry
-     *      parentPath - the path to a key that identifies the parent of each entry
-     *      root       - the id of the desired top-most result
+     * @param string $idPath
+     * @param string $parentPath
+     * @param string $childrenKey
      * @return array of results, nested
-     * @link
      */
-    public static function nest($data, $options = array()) {
+    public static function nest($data, $idPath = '/id', $parentPath = '/parent_id', $childrenKey = 'children') {
         if (!$data) {
             return $data;
         }
 
-        $alias = key(current($data));
-        $options += array(
-            'idPath' => "/$alias/id",
-            'parentPath' => "/$alias/parent_id",
-            'children' => 'children',
-            'root' => null
-        );
-
         $return = $idMap = array();
-        $ids = Set::extract($data, $options['idPath']);
-        $idKeys = explode('/', trim($options['idPath'], '/'));
-        $parentKeys = explode('/', trim($options['parentPath'], '/'));
+        $ids = Set::extract($data, $idPath);
+        $idKeys = explode('/', trim($idPath, '/'));
+        $parentKeys = explode('/', trim($parentPath, '/'));
 
         foreach ($data as $result) {
-            $result[$options['children']] = array();
+            $result[$childrenKey] = array();
 
             $id = Set::get($result, $idKeys);
             $parentId = Set::get($result, $parentKeys);
 
-            if (isset($idMap[$id][$options['children']])) {
+            if (isset($idMap[$id][$childrenKey])) {
                 $idMap[$id] = array_merge($result, (array)$idMap[$id]);
             } else {
-                $idMap[$id] = array_merge($result, array($options['children'] => array()));
+                $idMap[$id] = array_merge($result, array($childrenKey => array()));
             }
-            if (!$parentId || !in_array($parentId, $ids)) {
+            if (!$parentId || !in_array($parentId, $ids, true)) {
                 $return[] =& $idMap[$id];
             } else {
-                $idMap[$parentId][$options['children']][] =& $idMap[$id];
+                $idMap[$parentId][$childrenKey][] =& $idMap[$id];
             }
         }
-
-        if ($options['root']) {
-            $root = $options['root'];
-        } else {
-            $root = Set::get($return[0], $parentKeys);
-        }
-
-        foreach ($return as $i => $result) {
-            $id = Set::get($result, $idKeys);
-            $parentId = Set::get($result, $parentKeys);
-            if ($id !== $root && $parentId != $root) {
-                unset($return[$i]);
-            }
-        }
-
         return array_values($return);
     }
 
