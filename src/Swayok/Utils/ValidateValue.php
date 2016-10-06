@@ -106,7 +106,7 @@ abstract class ValidateValue {
 
     static public function isJson(&$value, $decode = false) {
         $decoded = json_decode($value, true);
-        if ($decoded !== false) {
+        if ($decoded !== false || $value === 'false') {
             if ($decode) {
                 $value = $decoded;
             }
