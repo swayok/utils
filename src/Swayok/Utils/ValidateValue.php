@@ -69,8 +69,8 @@ abstract class ValidateValue {
 
     static public function isDateTime(&$value, $convertToUnixTs = false) {
         if (ValidateValue::isInteger($value)) {
-            return $value > 0;
-        } else if (is_string($value) && strtotime($value) !== 0) {
+            return (int)$value > 0;
+        } else if (is_string($value) && strtotime($value) > 0) {
             if ($convertToUnixTs) {
                 $value = strtotime($value);
             }
@@ -81,7 +81,7 @@ abstract class ValidateValue {
     }
 
     static public function isDateTimeWithTz($value) {
-        if (is_string($value) && strtotime($value) !== 0) {
+        if (is_string($value) && !is_numeric($value) && strtotime($value) > 0) {
             return true;
         } else {
             return false;
@@ -105,8 +105,13 @@ abstract class ValidateValue {
     }
 
     static public function isJson(&$value, $decode = false) {
+        if (is_array($value) || is_bool($value) || $value === null) {
+            return true;
+        } else if (!is_string($value) && !is_numeric($value)) {
+            return false;
+        }
         $decoded = json_decode($value, true);
-        if ($decoded !== false || $value === 'false') {
+        if ($decoded !== null) {
             if ($decode) {
                 $value = $decoded;
             }
@@ -115,26 +120,53 @@ abstract class ValidateValue {
         return false;
     }
 
-    static public function isUploadedFile($value) {
+    /**
+     * @param mixed $value
+     * @param bool $acceptAnyFiles - true: use File::exist($value['tmp_name']) | false: use is_uploaded_file($value['tmp_name'])
+     * @return bool
+     */
+    static public function isUploadedFile($value, $acceptNotUploadedFiles = false) {
         if (is_array($value)) {
             return (
-                array_key_exists('error', $value) && $value['error'] === UPLOAD_ERR_OK
-                && !empty($value['size'])
+                array_key_exists('error', $value)
+                && $value['error'] === UPLOAD_ERR_OK
+                && array_key_exists('size', $value)
+                && (int)$value['size'] > 0
                 && array_key_exists('tmp_name', $value)
-                && is_uploaded_file($value['tmp_name'])
+                && array_key_exists('name', $value)
+                && array_key_exists('type', $value)
+                && (
+                    ($acceptNotUploadedFiles && File::exist($value['tmp_name']))
+                    || is_uploaded_file($value['tmp_name'])
+                )
             );
-        } else if (is_object($value) && get_class($value) === '\Symfony\Component\HttpFoundation\File\UploadedFile') {
+        } else if (is_object($value) && get_class($value) === 'Symfony\Component\HttpFoundation\File\UploadedFile') {
             /** @var \Symfony\Component\HttpFoundation\File\UploadedFile $value */
-            return $value->isValid();
+            return (
+                $value->getError() === UPLOAD_ERR_OK
+                && $value->getSize() > 0
+                && (
+                    ($acceptNotUploadedFiles && File::exist($value->getPathname()))
+                    || is_uploaded_file($value->getPathname())
+                )
+            );
         }
         return false;
     }
 
-    static public function isUploadedImage($value) {
-        if (static::isUploadedFile($value)) {
+    /**
+     * @param mixed $value
+     * @param bool $acceptAnyFiles - true: use File::exist($value['tmp_name']) | false: use is_uploaded_file($value['tmp_name'])
+     * @return bool
+     */
+    static public function isUploadedImage($value, $acceptNotUploadedFiles = false) {
+        if (static::isUploadedFile($value, $acceptNotUploadedFiles)) {
             if (is_array($value)) {
                 $extRegexp = implode('|', array_keys(static::$imageTypes));
-                return preg_match("%^.+\.($extRegexp)$%i", $value['name']) > 0;
+                return (
+                    in_array($value['type'], array_values(static::$imageTypes), true)
+                    || preg_match("%^.+\.($extRegexp)$%i", $value['name']) > 0
+                );
             } else if (is_object($value)) {
                 /** @var \Symfony\Component\HttpFoundation\File\UploadedFile $value */
                 $mime = $value->getMimeType();
@@ -150,14 +182,15 @@ abstract class ValidateValue {
 
     /**
      * $value must be in format: hh:mm or integer.
-     * Range actually should be between -12:00 and +14:00 but it is not validated
+     * Range actually should be between -12:00 and +14:00 but it is not validated so it might be
+     * in range from -23:59:59 to +23:59:59
      * @param string $value
      * @return bool
      */
     static public function isTimezoneOffset($value) {
         return (
-            static::isInteger($value)
-            || is_string($value) && preg_match('%^(-|+)?([0-1]\d|2[0-4]):[0-5]\d$%', $value)
+            (static::isInteger($value, true) && $value > -86400 && $value < 86400)
+            || (is_string($value) && preg_match('%^(-|\+)?([0-1]\d|2[0-3]):[0-5]\d(:[0-6]\d)?$%', $value))
         );
     }
 
