@@ -24,7 +24,7 @@ abstract class Curl {
         curl_setopt(self::$curl, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt(self::$curl, CURLOPT_MAXREDIRS, 5);
         curl_setopt(self::$curl, CURLOPT_ENCODING, '');
-        curl_setopt(self::$curl, CURLOPT_USERAGENT, 'CamOnRoad.com');
+        curl_setopt(self::$curl, CURLOPT_USERAGENT, 'Curl');
         if ($url) {
             $url = str_ireplace(' ', '%20', $url);
             curl_setopt(self::$curl, CURLOPT_URL, $url);
