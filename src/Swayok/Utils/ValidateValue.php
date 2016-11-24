@@ -4,13 +4,13 @@ namespace Swayok\Utils;
 
 abstract class ValidateValue {
 
-    const INTEGER_REGEXP = '%^-?\d+(\.0+)?$%i';
-    const FLOAT_REGEXP = '%^-?\d+(\.\d+)?$%i';
-    const IP_ADDRESS_REGEXP = '%^(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)$%i';
+    const INTEGER_REGEXP = '%^-?\d+(\.0+)?$%';
+    const FLOAT_REGEXP = '%^-?\d+(\.\d+)?$%';
+    const IP_ADDRESS_REGEXP = '%^(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)$%';
     //    const EMAIL_REGEXP = '%^(([^<>()\[\].,;:\s@"*\'#$\%\^&=+\\\/!\?]+(\.[^<>()\[\],;:\s@"*\'#$\%\^&=+\\\/!\?]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$%i';
-    const EMAIL_REGEXP = "%^[a-z0-9!#\$\%&'*+/=?\^_`{|}~-]+(?:\.[a-z0-9!#\$\%&'*+/=?\^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$%i"; //< http://www.regular-expressions.info/email.html
-    const SHA1_REGEXP = "%^[a-fA-F0-9]{40}$%i";
-    const MD5_REGEXP = "%^[a-fA-F0-9]{32}$%i";
+    const EMAIL_REGEXP = "%^[a-z0-9!#\$\%&'*+/=?\^_`{|}~-]+(?:\.[a-z0-9!#\$\%&'*+/=?\^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$%"; //< http://www.regular-expressions.info/email.html
+    const SHA1_REGEXP = "%^[a-fA-F0-9]{40}$%";
+    const MD5_REGEXP = "%^[a-fA-F0-9]{32}$%";
     const DATE_FORMAT = 'Y-m-d';
     const TIME_FORMAT = 'H:i:s';
     const DATETIME_FORMAT = 'Y-m-d H:i:s';
@@ -122,7 +122,7 @@ abstract class ValidateValue {
 
     /**
      * @param mixed $value
-     * @param bool $acceptAnyFiles - true: use File::exist($value['tmp_name']) | false: use is_uploaded_file($value['tmp_name'])
+     * @param bool $acceptNotUploadedFiles - true: use File::exist($value['tmp_name']) | false: use is_uploaded_file($value['tmp_name'])
      * @return bool
      */
     static public function isUploadedFile($value, $acceptNotUploadedFiles = false) {
@@ -156,7 +156,7 @@ abstract class ValidateValue {
 
     /**
      * @param mixed $value
-     * @param bool $acceptAnyFiles - true: use File::exist($value['tmp_name']) | false: use is_uploaded_file($value['tmp_name'])
+     * @param bool $acceptNotUploadedFiles - true: use File::exist($value['tmp_name']) | false: use is_uploaded_file($value['tmp_name'])
      * @return bool
      */
     static public function isUploadedImage($value, $acceptNotUploadedFiles = false) {
