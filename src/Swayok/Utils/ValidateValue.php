@@ -217,4 +217,20 @@ abstract class ValidateValue {
         }
         return false;
     }
+
+    /**
+     * Validates if jpeg file is not currupted
+     * @param $filePath
+     * @return bool
+     */
+    static public function isCorruptedJpeg($filePath) {
+        $file = fopen($filePath, 'rb');
+        $ret = false;
+        // check for the existence of the EOI segment header at the end of the file
+        if (0 !== fseek($file, -2, SEEK_END) || "\xFF\xD9" !== fread($file, 2)) {
+            $ret = true;
+        }
+        fclose($file);
+        return $ret;
+    }
 }
