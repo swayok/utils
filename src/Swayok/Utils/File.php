@@ -119,7 +119,7 @@ class File {
     /**
      * is file exists
      * @param string|null $path - null: use self::$lastLoadedFile | string: load that file
-     * @return File
+     * @return bool
      */
     static public function exist($path = null) {
         return self::load($path)->exists();
