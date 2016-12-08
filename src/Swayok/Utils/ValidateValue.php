@@ -140,16 +140,18 @@ abstract class ValidateValue {
                     || is_uploaded_file($value['tmp_name'])
                 )
             );
-        } else if (is_object($value) && get_class($value) === 'Symfony\Component\HttpFoundation\File\UploadedFile') {
-            /** @var \Symfony\Component\HttpFoundation\File\UploadedFile $value */
-            return (
-                $value->getError() === UPLOAD_ERR_OK
-                && $value->getSize() > 0
-                && (
-                    ($acceptNotUploadedFiles && File::exist($value->getPathname()))
-                    || is_uploaded_file($value->getPathname())
-                )
-            );
+        } else if (is_object($value) && $value instanceof \SplFileInfo) {
+            if (get_class($value) === 'Symfony\Component\HttpFoundation\File\UploadedFile') {
+                /** @var \Symfony\Component\HttpFoundation\File\UploadedFile $value */
+                return (
+                    $value->getError() === UPLOAD_ERR_OK
+                    && $value->getSize() > 0
+                    && is_uploaded_file($value->getPathname())
+                );
+            } else if ($acceptNotUploadedFiles) {
+                /** @var \SplFileInfo $value */
+                return $value->isFile() && $value->getSize() > 0;
+            }
         }
         return false;
     }
