@@ -175,7 +175,7 @@ abstract class ValidateValue {
                 if ($mime) {
                     return in_array($mime, static::$imageTypes, true);
                 } else {
-                    return in_array($value->getExtension(), array_keys(static::$imageTypes), true);
+                    return array_key_exists($value->getExtension(), static::$imageTypes);
                 }
             }
         }
