@@ -165,14 +165,23 @@ abstract class ValidateValue {
         if (static::isUploadedFile($value, $acceptNotUploadedFiles)) {
             if (is_array($value)) {
                 $extRegexp = implode('|', array_keys(static::$imageTypes));
+                $finfo = new \finfo(FILEINFO_MIME_TYPE);
+                $mime = $finfo->file($value['tmp_name']);
                 return (
-                    in_array($value['type'], array_values(static::$imageTypes), true)
+                    in_array($mime, static::$imageTypes, true)
+                    || in_array($value['type'], static::$imageTypes, true)
                     || preg_match("%^.+\.($extRegexp)$%i", $value['name']) > 0
                 );
-            } else if (is_object($value)) {
-                /** @var \Symfony\Component\HttpFoundation\File\UploadedFile $value */
-                $mime = $value->getMimeType();
-                if ($mime) {
+            } else if ($value instanceof \SplFileInfo) {
+                if (get_class($value) === 'Symfony\Component\HttpFoundation\File\UploadedFile') {
+                    /** @var \Symfony\Component\HttpFoundation\File\UploadedFile $value */
+                    $mime = $value->getMimeType();
+                } else {
+                    /** @var \SplFileInfo $value */
+                    $finfo = new \finfo(FILEINFO_MIME_TYPE);
+                    $mime = $finfo->file($value->getRealPath());
+                }
+                if (!empty($mime)) {
                     return in_array($mime, static::$imageTypes, true);
                 } else {
                     return array_key_exists($value->getExtension(), static::$imageTypes);
