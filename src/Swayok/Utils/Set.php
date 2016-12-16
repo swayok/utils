@@ -185,7 +185,8 @@ class Set {
      * - /Comment/.[:last] (Selects the last comment)
      * - /Comment/.[:first] (Selects the first comment)
      * - /Comment[text=/cakephp/i] (Selects the all comments that have a text matching the regex /cakephp/i)
-     * - /Comment/@* (Selects the all key names of all comments)
+     * - /Comment/@* (Selects the all key names of all comments like foreach($comments as $comment) array_keys($comments))
+     * - /Comment/@ (Selects the indexes/keys of all comments like array_keys($comments))
      *
      * #### Other limitations:
      *
@@ -253,7 +254,13 @@ class Set {
                     $matches[] = $context;
                     continue;
                 }
-                if ($token === '@*' && is_array($context['item'])) {
+                if ($token === '@' && is_array($context['item'])) {
+                    $matches[] = array(
+                        'trace' => array_merge($context['trace'], (array)$key),
+                        'key' => $key,
+                        'item' => $key,
+                    );
+                } elseif ($token === '@*' && is_array($context['item'])) {
                     $matches[] = array(
                         'trace' => array_merge($context['trace'], (array)$key),
                         'key' => $key,
