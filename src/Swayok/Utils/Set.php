@@ -213,6 +213,8 @@ class Set {
         }
         if ($path === '/') {
             return $data;
+        } else if ($path === '@') {
+            return array_keys($data);
         }
         $contexts = $data;
         $options = array_merge(array('flatten' => true), $options);
