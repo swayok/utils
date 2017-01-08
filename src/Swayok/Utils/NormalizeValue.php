@@ -48,6 +48,8 @@ abstract class NormalizeValue {
     static public function normalizeJson($value) {
         if (is_string($value) && mb_strlen($value) >= 2 && preg_match('%^(\{.*\}|\[.*\])$%s', $value)) {
             return $value;
+        } else if ($value === '') {
+            return $value;
         } else {
             return !is_string($value) && ValidateValue::isFloat($value) ? "$value" : json_encode($value, JSON_UNESCAPED_UNICODE);
         }
