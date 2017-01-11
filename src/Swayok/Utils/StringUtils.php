@@ -346,6 +346,49 @@ class StringUtils {
     );
 
     /**
+     * Return $word in plural form.
+     *
+     * @param string $word - word in singular
+     * @return string - word in plural
+     */
+    public static function pluralize($word) {
+        if (isset(self::$_cache['pluralize'][$word])) {
+            return self::$_cache['pluralize'][$word];
+        }
+
+        if (!isset(self::$_plural['merged']['irregular'])) {
+            self::$_plural['merged']['irregular'] = self::$_plural['irregular'];
+        }
+
+        if (!isset(self::$_plural['merged']['uninflected'])) {
+            self::$_plural['merged']['uninflected'] = array_merge(self::$_plural['uninflected'], self::$_uninflected);
+        }
+
+        if (!isset(self::$_plural['cacheUninflected']) || !isset(self::$_plural['cacheIrregular'])) {
+            self::$_plural['cacheUninflected'] = '(?:' . implode('|', self::$_plural['merged']['uninflected']) . ')';
+            self::$_plural['cacheIrregular'] = '(?:' . implode('|', array_keys(self::$_plural['merged']['irregular'])) . ')';
+        }
+
+        if (preg_match('/(.*)\\b(' . self::$_plural['cacheIrregular'] . ')$/i', $word, $regs)) {
+            self::$_cache['pluralize'][$word] = $regs[1] . substr($word, 0, 1) . substr(self::$_plural['merged']['irregular'][strtolower($regs[2])], 1);
+            return self::$_cache['pluralize'][$word];
+        }
+
+        if (preg_match('/^(' . self::$_plural['cacheUninflected'] . ')$/i', $word, $regs)) {
+            self::$_cache['pluralize'][$word] = $word;
+            return $word;
+        }
+
+        foreach (self::$_plural['rules'] as $rule => $replacement) {
+            if (preg_match($rule, $word)) {
+                self::$_cache['pluralize'][$word] = preg_replace($rule, $replacement, $word);
+                return self::$_cache['pluralize'][$word];
+            }
+        }
+        return $word;
+    }
+
+    /**
      * Return $word in singular form.
      *
      * @param string $word - word in plural
