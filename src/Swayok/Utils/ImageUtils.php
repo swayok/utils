@@ -480,7 +480,7 @@ class ImageUtils {
                 ? $imagesPath . $fileName . $imageVersionConfig->getFileNameSuffix($versionName) . '.' . $profileExt
                 : '';
         }
-        return $result;
+        return str_ireplace(['/', '\\'], DIRECTORY_SEPARATOR , $result);
     }
 
     /**
