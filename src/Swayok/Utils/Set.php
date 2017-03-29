@@ -55,9 +55,9 @@ class Set {
                     if (is_object($out)) {
                         $out = get_object_vars($out);
                     }
-                    $out[$key] = Set::_map($value, $class);
+                    $out[$key] = self::_map($value, $class);
                     if (is_object($out[$key])) {
-                        if ($primary !== true && is_array($value) && Set::countDim($value, true) === 2) {
+                        if ($primary !== true && is_array($value) && self::countDim($value, true) === 2) {
                             if (!isset($out[$key]->_name_)) {
                                 $out[$key]->_name_ = $primary;
                             }
@@ -72,18 +72,18 @@ class Set {
                         // @codingStandardsIgnoreEnd
                         $primary = false;
                         foreach ($value as $key2 => $value2) {
-                            $out->{$key2} = Set::_map($value2, true);
+                            $out->{$key2} = self::_map($value2, true);
                         }
                     } else {
                         if (!is_numeric($key)) {
-                            $out->{$key} = Set::_map($value, true, $key);
+                            $out->{$key} = self::_map($value, true, $key);
                             if (is_object($out->{$key}) && !is_numeric($key)) {
                                 if (!isset($out->{$key}->_name_)) {
                                     $out->{$key}->_name_ = $key;
                                 }
                             }
                         } else {
-                            $out->{$key} = Set::_map($value, true);
+                            $out->{$key} = self::_map($value, true);
                         }
                     }
                 } else {
@@ -117,7 +117,7 @@ class Set {
      *
      * @param array $data Source array from which to extract the data
      * @param string $format Format string into which values will be inserted, see sprintf()
-     * @param array $keys An array containing one or more Set::extract()-style key paths
+     * @param array $keys An array containing one or more self::extract()-style key paths
      * @return array An array of strings extracted from $keys and formatted with $format
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/set.html#Set::format
      */
@@ -129,8 +129,9 @@ class Set {
             return false;
         }
 
+        $data = self::prepareDataArray($data);
         for ($i = 0; $i < $count; $i++) {
-            $extracted[] = Set::extract($data, $keys[$i]);
+            $extracted[] = self::extract($data, $keys[$i]);
         }
         $out = array();
         $data = $extracted;
@@ -170,7 +171,7 @@ class Set {
 
     /**
      * Implements partial support for XPath 2.0. If $path does not contain a '/' the call
-     * is delegated to Set::classicExtract(). Also the $path and $data arguments are
+     * is delegated to self::classicExtract(). Also the $path and $data arguments are
      * reversible.
      *
      * #### Currently implemented selectors:
@@ -216,11 +217,12 @@ class Set {
         } else if ($path === '@') {
             return array_keys($data);
         }
+
         $contexts = $data;
         $options = array_merge(array('flatten' => true), $options);
         if (!isset($contexts[0])) {
             $current = current($data);
-            if ((is_array($current) && count($data) < 1) || !is_array($current) || !Set::numeric(array_keys($data))) {
+            if ((is_array($current) && count($data) < 1) || !is_array($current) || !self::numeric(array_keys($data))) {
                 $contexts = array($data);
             }
         }
@@ -244,7 +246,7 @@ class Set {
                         $context['trace'][] = $context['key'];
                     }
                     $parent = implode('/', $context['trace']) . '/.';
-                    $context['item'] = Set::extract($parent, $data);
+                    $context['item'] = self::extract($parent, $data);
                     $context['key'] = array_pop($context['trace']);
                     if (isset($context['trace'][1]) && $context['trace'][1] > 0) {
                         $context['item'] = $context['item'][0];
@@ -323,7 +325,7 @@ class Set {
                     $filtered = array();
                     $length = count($matches);
                     foreach ($matches as $i => $match) {
-                        if (Set::matches(array($condition), $match['item'], $i + 1, $length)) {
+                        if (self::matches(array($condition), $match['item'], $i + 1, $length)) {
                             $filtered[$i] = $match;
                         }
                     }
@@ -350,6 +352,37 @@ class Set {
     }
 
     /**
+     * @param mixed $data
+     * @return mixed
+     */
+    static protected function prepareDataArray($data) {
+        if (is_object($data)) {
+            if ($data instanceof \Traversable) {
+                $data = self::convertIteratableObjectToArray($data);
+            } else if (!($data instanceof \ArrayAccess)) {
+                $data = get_object_vars($data);
+            }
+        }
+        return $data;
+    }
+
+    /**
+     * @param \Traversable $object
+     * @return array;
+     */
+    static protected function convertIteratableObjectToArray(\Traversable $object) {
+        $ret = array();
+        foreach ($object as $key => $item) {
+            if ($item instanceof \Traversable) {
+                $ret[$key] = static::convertIteratableObjectToArray($item);
+            } else {
+                $ret[$key] = $item;
+            }
+        }
+        return $ret;
+    }
+
+    /**
      * This function can be used to see if a single item or a given xpath match certain conditions.
      *
      * @param string|array $conditions An array of condition strings or an XPath expression
@@ -363,17 +396,18 @@ class Set {
         if (empty($conditions)) {
             return true;
         }
+        $data = self::prepareDataArray($data);
         if (is_string($conditions)) {
-            return (bool)Set::extract($conditions, $data);
+            return (bool)self::extract($conditions, $data);
         }
         foreach ($conditions as $condition) {
             if ($condition === ':last') {
-                if ($i != $length) {
+                if ($i !== $length) {
                     return false;
                 }
                 continue;
             } elseif ($condition === ':first') {
-                if ($i != 1) {
+                if ($i !== 1) {
                     return false;
                 }
                 continue;
@@ -439,8 +473,8 @@ class Set {
         }
 
         foreach ($path as $i => $key) {
-            if (is_numeric($key) && intval($key) > 0 || $key === '0') {
-                $key = intval($key);
+            if ((is_numeric($key) && (int)$key > 0) || $key === '0') {
+                $key = (int)$key;
             }
             if ($i === count($path) - 1) {
                 return (is_array($data) && array_key_exists($key, $data));
@@ -497,7 +531,7 @@ class Set {
 
         foreach ($val2 as $key => $val) {
             if (is_numeric($key)) {
-                Set::contains($val, $val1);
+                self::contains($val, $val1);
             } else {
                 if (!isset($val1[$key]) || $val1[$key] != $val) {
                     return false;
@@ -522,13 +556,13 @@ class Set {
             $depth = array($count);
             if (is_array($array) && reset($array) !== false) {
                 foreach ($array as $value) {
-                    $depth[] = Set::countDim($value, true, $count + 1);
+                    $depth[] = self::countDim($value, true, $count + 1);
                 }
             }
             $return = max($depth);
         } else {
             if (is_array(reset($array))) {
-                $return = Set::countDim(reset($array)) + 1;
+                $return = self::countDim(reset($array)) + 1;
             } else {
                 $return = 1;
             }
@@ -539,7 +573,7 @@ class Set {
     /**
      * Creates an associative array using a $path1 as the path to build its keys, and optionally
      * $path2 as path to get the values. If $path2 is not specified, all values will be initialized
-     * to null (useful for Set::merge). You can optionally group the values by what is obtained when
+     * to null (useful for self::merge). You can optionally group the values by what is obtained when
      * following the path specified in $groupPath.
      *
      * @param array|object $data Array or object from where to extract keys and values
@@ -554,17 +588,13 @@ class Set {
             return array();
         }
 
-        if (is_object($data)) {
-            if (!($data instanceof \ArrayAccess || $data instanceof \Traversable)) {
-                $data = get_object_vars($data);
-            }
-        }
+        $data = self::prepareDataArray($data);
 
         if (is_array($path1)) {
             $format = array_shift($path1);
-            $keys = Set::format($data, $format, $path1);
+            $keys = self::format($data, $format, $path1);
         } else {
-            $keys = Set::extract($data, $path1);
+            $keys = self::extract($data, $path1);
         }
         if (empty($keys)) {
             return array();
@@ -572,9 +602,9 @@ class Set {
         $vals = array();
         if (!empty($path2) && is_array($path2)) {
             $format = array_shift($path2);
-            $vals = Set::format($data, $format, $path2);
+            $vals = self::format($data, $format, $path2);
         } elseif (!empty($path2)) {
-            $vals = Set::extract($data, $path2);
+            $vals = self::extract($data, $path2);
         } else {
             $count = count($keys);
             for ($i = 0; $i < $count; $i++) {
@@ -583,7 +613,7 @@ class Set {
         }
 
         if ($groupPath) {
-            $group = Set::extract($data, $groupPath);
+            $group = self::extract($data, $groupPath);
             if (!empty($group)) {
                 $c = count($keys);
                 $out = array();
@@ -660,7 +690,7 @@ class Set {
                 $id = $key;
             }
             if (is_array($r) && !empty($r)) {
-                $stack = array_merge($stack, Set::_flatten($r, $id));
+                $stack = array_merge($stack, self::_flatten($r, $id));
             } else {
                 $stack[] = array('id' => $id, 'value' => $r);
             }
@@ -681,14 +711,15 @@ class Set {
         if (empty($data)) {
             return $data;
         }
+        $data = self::prepareDataArray($data);
         $originalKeys = array_keys($data);
         $numeric = false;
         if (is_numeric(implode('', $originalKeys))) {
             $data = array_values($data);
             $numeric = true;
         }
-        $result = Set::_flatten(Set::extract($data, $path));
-        list($keys, $values) = array(Set::extract($result, '{n}.id'), Set::extract($result, '{n}.value'));
+        $result = self::_flatten(self::extract($data, $path));
+        list($keys, $values) = array(self::extract($result, '{n}.id'), self::extract($result, '{n}.value'));
 
         $dir = strtolower($dir);
         if ($dir === 'asc') {
@@ -716,7 +747,7 @@ class Set {
 
     /**
      * Allows the application of a callback method to elements of an
-     * array extracted by a Set::extract() compatible path.
+     * array extracted by a self::extract() compatible path.
      *
      * @param mixed $path Set-compatible path to the array value
      * @param array $data An array of data to extract from & then process with the $callback.
@@ -733,7 +764,8 @@ class Set {
     public static function apply($path, $data, $callback, $options = array()) {
         $defaults = array('type' => 'pass');
         $options = array_merge($defaults, $options);
-        $extracted = Set::extract($path, $data);
+        $data = self::prepareDataArray($data);
+        $extracted = self::extract($path, $data);
 
         if ($options['type'] === 'map') {
             return array_map($callback, $extracted);
@@ -759,16 +791,17 @@ class Set {
             return $data;
         }
 
+        $data = self::prepareDataArray($data);
         $return = $idMap = array();
-        $ids = Set::extract($data, $idPath);
+        $ids = self::extract($data, $idPath);
         $idKeys = explode('/', trim($idPath, '/'));
         $parentKeys = explode('/', trim($parentPath, '/'));
 
         foreach ($data as $result) {
             $result[$childrenKey] = array();
 
-            $id = Set::get($result, $idKeys);
-            $parentId = Set::get($result, $parentKeys);
+            $id = self::get($result, $idKeys);
+            $parentId = self::get($result, $parentKeys);
 
             if (isset($idMap[$id][$childrenKey])) {
                 $idMap[$id] = array_merge($result, (array)$idMap[$id]);
