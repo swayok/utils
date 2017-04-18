@@ -129,20 +129,18 @@ class File {
      * Write/Overwrite contents to file
      * @param string $path
      * @param string $data
-     * @param string|bool|int $permissions
+     * @param int $filePermissions
+     * @param int $folderPermissions
      * @return bool
+     * @internal param bool|int|string $permissions
      */
-    static public function save($path, $data, $permissions = false) {
-        $ret = self::load($path)->write($data, 'w');
-        if ($ret && $permissions) {
-            self::lastLoaded()->chmod($permissions);
-        }
-        return $ret;
+    static public function save($path, $data, $filePermissions = 0666, $folderPermissions = 0777) {
+        return self::load($path, true, $folderPermissions, $filePermissions)->write($data, 'w');
     }
 
     /**
      * @param string $path
-     * @param array|object|string $data
+     * @param array|\stdClass|string $data
      * @param bool $create
      * @param int $folderPermissions
      * @param int $filePermissions
