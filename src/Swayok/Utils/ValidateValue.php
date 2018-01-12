@@ -141,7 +141,8 @@ abstract class ValidateValue {
                 )
             );
         } else if (is_object($value) && $value instanceof \SplFileInfo) {
-            if (get_class($value) === 'Symfony\Component\HttpFoundation\File\UploadedFile') {
+            $symphonyUpload = 'Symfony\Component\HttpFoundation\File\UploadedFile';
+            if ($value instanceof $symphonyUpload) {
                 /** @var \Symfony\Component\HttpFoundation\File\UploadedFile $value */
                 return (
                     $value->getError() === UPLOAD_ERR_OK
