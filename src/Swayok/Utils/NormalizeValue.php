@@ -14,11 +14,19 @@ abstract class NormalizeValue {
 
     /**
      * @param mixed $value
-     * @param array $additionalFalseOptions - for example: ['n', 'no']
-     * @return bool - false: value equals one of false, '0', 0 or $additionalFalseOptions; true: otherwise
+     * @return bool - false: value equals one of false, '0', 0; true: otherwise
      */
-    static public function normalizeBoolean($value, array $additionalFalseOptions = []) {
-        return !in_array($value, array_merge([false, '0', 0], $additionalFalseOptions), true);
+    static public function normalizeBoolean($value) {
+        return (bool)$value;
+    }
+
+    /**
+     * @param mixed $value
+     * @param array $additionalFalseOptions - for example: ['n', 'no']
+     * @return bool - false: value equals one of [false, '0', 0] or $additionalFalseOptions; true: otherwise
+     */
+    static public function normalizeBooleanExtended($value, array $additionalFalseOptions) {
+        return !((bool)$value === false || in_array($value, $additionalFalseOptions, true));
     }
 
     static public function normalizeInteger($value) {
