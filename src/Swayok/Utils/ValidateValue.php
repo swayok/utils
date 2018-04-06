@@ -147,7 +147,7 @@ abstract class ValidateValue {
                 return (
                     $value->getError() === UPLOAD_ERR_OK
                     && $value->getSize() > 0
-                    && is_uploaded_file($value->getPathname())
+                    && (is_uploaded_file($value->getPathname()) || $acceptNotUploadedFiles)
                 );
             } else if ($acceptNotUploadedFiles) {
                 /** @var \SplFileInfo $value */
