@@ -5,36 +5,40 @@ namespace Swayok\Utils;
 abstract class Curl {
 
     static public $curl = null;
-    static public function curlPrepare($url, $options = false) {
-        if (empty(self::$curl)) {
-            self::$curl = curl_init($url);
+    static public function curlPrepare($url, $options = false, $separateInstance = false) {
+        if ($separateInstance) {
+            $curl = curl_init($url);
         } else {
-            if (function_exists('curl_reset')) {
-                curl_reset(self::$curl);
-            } else {
-                curl_close(self::$curl);
-                self::$curl = null;
+            if (empty(self::$curl)) {
                 self::$curl = curl_init($url);
+            } else {
+                if (function_exists('curl_reset')) {
+                    curl_reset(self::$curl);
+                } else {
+                    curl_close(self::$curl);
+                    self::$curl = null;
+                    self::$curl = curl_init($url);
+                }
             }
+            $curl = self::$curl;
         }
-        curl_setopt(self::$curl, CURLOPT_HEADER, false);
-        curl_setopt(self::$curl, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt(self::$curl, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt(self::$curl, CURLOPT_SSL_VERIFYHOST, false);
-        curl_setopt(self::$curl, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt(self::$curl, CURLOPT_MAXREDIRS, 5);
-        curl_setopt(self::$curl, CURLOPT_ENCODING, '');
-        curl_setopt(self::$curl, CURLOPT_USERAGENT, 'Curl');
+        curl_setopt($curl, CURLOPT_HEADER, false);
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($curl, CURLOPT_MAXREDIRS, 5);
+        curl_setopt($curl, CURLOPT_ENCODING, '');
+        curl_setopt($curl, CURLOPT_USERAGENT, 'Curl');
         if ($url) {
             $url = str_ireplace(' ', '%20', $url);
-            curl_setopt(self::$curl, CURLOPT_URL, $url);
+            curl_setopt($curl, CURLOPT_URL, $url);
         }
         if (!empty($options) && is_array($options)) {
             foreach ($options as $option => $value) {
-                curl_setopt(self::$curl, $option, $value);
+                curl_setopt($curl, $option, $value);
             }
         }
-        return self::$curl;
+        return $curl;
     }
 
     /**
@@ -64,14 +68,19 @@ abstract class Curl {
         }
         $curl = self::curlPrepare($url, $options);
         $response = curl_exec($curl);
-        $code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        $curlError = curl_errno($curl) ? curl_error($curl) : false;
-        $requestUrl = curl_getinfo($curl, CURLINFO_EFFECTIVE_URL);
+        $ret = static::processResponse($curl, $response);
         if ($close) {
             curl_close($curl);
             self::$curl = null;
             unset($curl);
         }
+        return $ret;
+    }
+
+    static public function processResponse($curl, $response) {
+        $code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        $curlError = curl_errno($curl) ? curl_error($curl) : false;
+        $requestUrl = curl_getinfo($curl, CURLINFO_EFFECTIVE_URL);
         $result = array(
             'url' => $requestUrl,
             'http_code' => $code,
