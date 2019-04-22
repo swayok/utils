@@ -5,7 +5,14 @@ namespace Swayok\Utils;
 abstract class Curl {
 
     static public $curl = null;
-    static public function curlPrepare($url, $options = false, $separateInstance = false) {
+
+    /**
+     * @param string $url
+     * @param array $options
+     * @param bool $separateInstance - true: always create new curl instance | false: use self::$curl instance if possible
+     * @return false|resource|null
+     */
+    static public function curlPrepare($url, array $options = [], $separateInstance = false) {
         if ($separateInstance) {
             $curl = curl_init($url);
         } else {
@@ -33,10 +40,8 @@ abstract class Curl {
             $url = str_ireplace(' ', '%20', $url);
             curl_setopt($curl, CURLOPT_URL, $url);
         }
-        if (!empty($options) && is_array($options)) {
-            foreach ($options as $option => $value) {
-                curl_setopt($curl, $option, $value);
-            }
+        foreach ($options as $option => $value) {
+            curl_setopt($curl, $option, $value);
         }
         return $curl;
     }
