@@ -4,7 +4,7 @@ namespace Swayok\Utils;
 
 abstract class Curl {
 
-    static public $curl = null;
+    static public $curl;
 
     /**
      * @param string $url
@@ -12,7 +12,7 @@ abstract class Curl {
      * @param bool $separateInstance - true: always create new curl instance | false: use self::$curl instance if possible
      * @return false|resource|null
      */
-    static public function curlPrepare($url, array $options = [], $separateInstance = false) {
+    static public function curlPrepare($url, array $options = array(), $separateInstance = false) {
         if ($separateInstance) {
             $curl = curl_init($url);
         } else {
@@ -48,29 +48,16 @@ abstract class Curl {
 
     /**
      * @param resource|string $url - url string or curl resource
-     * @param null|array $postData - not array: using GET request | array : POST data
-     * @param bool|array $options
+     * @param null|array|string $postData
+     *  - empty: GET request
+     *  - array: POST data
+     *  - string: encoded POST data (url-encoded or json)
+     * @param array $options
      * @param bool $close - true: close request after exec
      * @return array
      */
-    static public function curlExec($url, $postData = null, $options = false, $close = true) {
-        if (!is_array($options)) {
-            $options = [];
-        }
-        /** @var array $options */
-        if (!array_key_exists(CURLOPT_CUSTOMREQUEST, $options)) {
-            if (!empty($postData)) {
-                $options[CURLOPT_POST] = true;
-                $options[CURLOPT_POSTFIELDS] = $postData;
-            } else {
-                if (!array_key_exists(CURLOPT_POST, $options)) {
-                    $options[CURLOPT_POST] = false;
-                }
-                if (!array_key_exists(CURLOPT_POSTFIELDS, $options) && empty($options[CURLOPT_POST])) {
-                    unset($options[CURLOPT_POSTFIELDS]); //< it seems that it is enough to set this to option to send post request
-                }
-            }
-        }
+    static public function curlExec($url, $postData = null, array $options = array(), $close = true) {
+        static::addHttpMethodOptions($options, $postData);
         $curl = self::curlPrepare($url, $options);
         $response = curl_exec($curl);
         $ret = static::processResponse($curl, $response);
@@ -82,7 +69,192 @@ abstract class Curl {
         return $ret;
     }
 
-    static public function processResponse($curl, $response) {
+    /**
+     * Request options:
+     * - 'url' - required
+     * - 'data' - optional, null or absent - GET request unless it is specified in 'options', array|string - POST request
+     * - 'data_is_json' - optional, true: add http header 'Content-Type: application/json' and convert 'data' to json if it is an array
+     * - 'options' - optional, array, list of curl options
+     * - 'extra' - optional, mixed, pass this value to response
+     *
+     * Example:
+     * $requests = [
+     *      'profile' => [
+     *          'url' => 'https://domain.com/api/user/profile,
+     *          'extra' => [
+     *              'some_key' => 'some_value'
+     *          ]
+     *      ],
+     *      'json_profile' => [
+     *          'url' => 'https://domain.com/api/user/profile,
+     *          'options' => [
+     *              CURLOPT_USERAGENT => 'Application',
+     *              CURLOPT_HTTPHEADER => [
+     *                  'Accept: application/json'
+     *              ]
+     *          ]
+     *      ],
+     *      'register' => [
+     *          'url' => 'https://domain.com/api/user/register,
+     *          'data' => ['login' => 'newuser', 'password' => '123123']
+     *      ],
+     * ]
+     *
+     * Response data:
+     * - 'url' - string, requested URL
+     * - 'http_code' - int, HTTP code received from requested URL
+     * - 'data' - string, data received from requested URL
+     * - 'curl_error' - int, curl error code
+     * - 'is_success' - bool, was request successful or not? (analyzes 'http_code' and 'curl_error')
+     * - 'extra' - mixed, data passed via 'extra' key in request options
+     *
+     * Example:
+     * $responses = [
+     *      'profile' => [
+     *          'url' => 'https://domain.com/api/user/profile,
+     *          'http_code' => 200,
+     *          'data' => '<html><head>...</head><body>...</body></html>',
+     *          'curl_error' => 0,
+     *          'is_success' => true,
+     *          'extra' => [
+     *              'some_key' => 'some_value'
+     *          ]
+     *      ],
+     *      'json_profile' => [
+     *          'url' => 'https://domain.com/api/user/profile,
+     *          'http_code' => 200,
+     *          'data' => '{"login":"newuser","name":"the user"}',
+     *          'curl_error' => 0,
+     *          'is_success' => true,
+     *      ],
+     *      'register' => [
+     *          'url' => 'https://domain.com/api/user/register,
+     *          'http_code' => 500,
+     *          'data' => '{"error":"Server error"}',
+     *          'curl_error' => 0,
+     *          'is_success' => false,
+     *      ],
+     * ]
+     * @param array $requests - contains list of requests options. key - request id, value - request options
+     * @return array - list of responses
+     */
+    static public function curlMultiExec(array $requests) {
+        if (empty($requests)) {
+            return [];
+        }
+        // create curl requests
+        $multi = curl_multi_init();
+        foreach ($requests as $requestId => &$requestInfo) {
+            $postData = array_get($requests, 'data');
+            $options = array_get($requestInfo, 'options');
+            if (!is_array($options)) {
+                $options = array();
+            }
+            if (isset($postData)) {
+                if (array_get($postData, 'data_is_json', false)) {
+                    // json POST request
+                    static::addJsonPostDataRequestOptions($options, $postData);
+                } else {
+                    // form data POST request
+                    static::addHttpMethodOptions($options, $postData);
+                }
+            }
+            $requestInfo['curl'] = static::curlPrepare($requestInfo['url'], $options, true);
+            curl_multi_add_handle($multi, $requestInfo['curl']);
+        }
+        unset($requestInfo);
+
+        // run and wait until all requests finished
+        $running = count($requests);
+        do {
+            curl_multi_exec($multi, $running);
+        } while($running > 0);
+
+        // handle responses
+        $responses = array();
+        foreach($requests as $requestId => $requestInfo) {
+            $response = curl_multi_getcontent($requestInfo['curl']);
+            $responses[$requestId] = static::processResponse($requestInfo['curl'], $response, true);
+            if (isset($requestInfo['extra'])) {
+                $responses[$requestId]['extra'] = $requestInfo['extra'];
+            }
+            curl_multi_remove_handle($multi, $requestInfo['curl']);
+            curl_close($requestInfo['curl']);
+        }
+
+        curl_multi_close($multi);
+
+        return $responses;
+    }
+
+    /**
+     * @param array $options
+     * @param null|array|string $postData
+     *  - empty: GET request
+     *  - array: POST data
+     *  - string: encoded POST data (url-encoded or json)
+     */
+    static public function addHttpMethodOptions(array &$options, $postData = null) {
+        if (isset($options[CURLOPT_CUSTOMREQUEST])) {
+            // ignore requests with custom type (PUT, DELETE, etc..)
+            return;
+        }
+        if (!empty($postData)) {
+            // POST request
+            $options[CURLOPT_POST] = true;
+            $options[CURLOPT_POSTFIELDS] = $postData;
+        } else if (!empty($options[CURLOPT_POSTFIELDS])) {
+            // we have CURLOPT_POSTFIELDS option set so this is a POST request anyway
+            $options[CURLOPT_POST] = true;
+        } else if (!isset($options[CURLOPT_POST])) {
+            // going to do GET request unless CURLOPT_POST specified explicitly
+            $options[CURLOPT_POST] = false;
+        }
+    }
+
+    /**
+     * @param array $options
+     * @param string|array $json - array will be passed to json_encode()
+     */
+    static public function addJsonPostDataRequestOptions(array &$options, $json) {
+        $options[CURLOPT_POST] = true;
+        $options[CURLOPT_POSTFIELDS] = is_array($json) ? json_encode($json) : $json;
+        if (!isset($options[CURLOPT_HTTPHEADER])) {
+            $options[CURLOPT_HTTPHEADER] = array();
+        }
+        $options[CURLOPT_HTTPHEADER][] = 'Content-Type: application/json';
+    }
+
+    /**
+     * @param array $options
+     * @param array $headers - headers to add. Format: ['Content-Type: application/json'] or ['Content-Type' => 'application/json']
+     */
+    static public function addHttpHeadersToOptions(array &$options, array $headers) {
+        if (!isset($options[CURLOPT_HTTPHEADER])) {
+            $options[CURLOPT_HTTPHEADER] = array();
+        }
+        foreach ($headers as $key => $value) {
+            if (is_string($key)) {
+                $options[CURLOPT_HTTPHEADER][] = $key . ': ' . $value;
+            } else {
+                $options[CURLOPT_HTTPHEADER][] = $value;
+            }
+        }
+    }
+
+    /**
+     * @param resource $curl
+     * @param string $response
+     * @param bool $validate - true: perform static::isValidResponse($result) and return result in 'is_success' key
+     * @return array = [
+     *      'url' => string, requested URL
+     *      'http_code' => int, HTTP code received from requested URL
+     *      'data' => string, data received from requested URL
+     *      'curl_error' => int, curl error code
+     *      'is_success' => only if $validate === true - bool, was request successful or not? static::isValidResponse($result)
+     * ]
+     */
+    static public function processResponse($curl, $response, $validate = false) {
         $code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
         $curlError = curl_errno($curl) ? curl_error($curl) : false;
         $requestUrl = curl_getinfo($curl, CURLINFO_EFFECTIVE_URL);
@@ -92,6 +264,9 @@ abstract class Curl {
             'data' => $response,
             'curl_error' => $curlError
         );
+        if ($validate) {
+            $result['is_success'] = static::isValidResponse($result);
+        }
         return $result;
     }
 
@@ -101,7 +276,11 @@ abstract class Curl {
         }
     }
 
-    static public function isValidResponse($curlResponse) {
+    /**
+     * @param array $curlResponse
+     * @return bool
+     */
+    static public function isValidResponse(array $curlResponse) {
         return empty($curlResponse['curl_error']) && $curlResponse['http_code'] < 400 && $curlResponse['http_code'] > 0;
     }
 
