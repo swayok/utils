@@ -22,8 +22,7 @@ abstract class Curl {
                 if (function_exists('curl_reset')) {
                     curl_reset(self::$curl);
                 } else {
-                    curl_close(self::$curl);
-                    self::$curl = null;
+                    self::close();
                     self::$curl = curl_init($url);
                 }
             }
@@ -62,8 +61,7 @@ abstract class Curl {
         $response = curl_exec($curl);
         $ret = static::processResponse($curl, $response);
         if ($close) {
-            curl_close($curl);
-            self::$curl = null;
+            static::close();
             unset($curl);
         }
         return $ret;
@@ -274,6 +272,7 @@ abstract class Curl {
         if (self::$curl) {
             curl_close(self::$curl);
         }
+        self::$curl = null;
     }
 
     /**
