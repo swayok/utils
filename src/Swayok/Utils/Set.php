@@ -576,6 +576,8 @@ class Set {
      * to null (useful for self::merge). You can optionally group the values by what is obtained when
      * following the path specified in $groupPath.
      *
+     * If you use "/@" or "/subarray/@" as $path1 with $groupPath then items in each group will be indexed from 0
+     *
      * @param array|object $data Array or object from where to extract keys and values
      * @param string|array $path1 As an array, or as a dot-separated string.
      * @param string|array $path2 As an array, or as a dot-separated string.
@@ -614,6 +616,7 @@ class Set {
 
         if ($groupPath) {
             $group = self::extract($data, $groupPath);
+            $useIndexesAsKeys = substr($path1, -1) === '@';
             if (!empty($group)) {
                 $c = count($keys);
                 $out = array();
@@ -624,7 +627,11 @@ class Set {
                     if (!isset($out[$group[$i]])) {
                         $out[$group[$i]] = array();
                     }
-                    $out[$group[$i]][$keys[$i]] = $vals[$i];
+                    if ($useIndexesAsKeys) {
+                        $out[$group[$i]][] = $vals[$i];
+                    } else {
+                        $out[$group[$i]][$keys[$i]] = $vals[$i];
+                    }
                 }
                 return $out;
             }
