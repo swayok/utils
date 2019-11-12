@@ -143,7 +143,7 @@ abstract class Curl {
         // create curl requests
         $multi = curl_multi_init();
         foreach ($requests as $requestId => &$requestInfo) {
-            $postData = array_get($requests, 'data');
+            $postData = array_get($requestInfo, 'data');
             $options = array_get($requestInfo, 'options');
             if (!is_array($options)) {
                 $options = array();
