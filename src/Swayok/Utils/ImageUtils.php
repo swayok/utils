@@ -447,12 +447,14 @@ class ImageUtils {
             $result[ImageVersionConfig::SOURCE_VERSION_NAME] .= '.' . $ext;
         }
         foreach ($imageVersionsConfigs as $versionName => $imageVersionConfig) {
-            $profileExt = $imageVersionConfig->isContentTypeConvertRequired()
-                ? self::getExtensionByContentType('image/' . $imageVersionConfig->getContentTypeToConvertTo())
-                : $ext;
-            $result[$versionName] = $imagesBaseUrl . $fileName . $imageVersionConfig->getFileNameSuffix($versionName);
-            if ($profileExt) {
-                $result[$versionName] .= '.' . $profileExt;
+            if ($versionName !== ImageVersionConfig::SOURCE_VERSION_NAME) {
+                $profileExt = $imageVersionConfig->isContentTypeConvertRequired()
+                    ? self::getExtensionByContentType('image/' . $imageVersionConfig->getContentTypeToConvertTo())
+                    : $ext;
+                $result[$versionName] = $imagesBaseUrl . $fileName . $imageVersionConfig->getFileNameSuffix($versionName);
+                if ($profileExt) {
+                    $result[$versionName] .= '.' . $profileExt;
+                }
             }
         }
         return $result;
@@ -473,14 +475,14 @@ class ImageUtils {
             $result[ImageVersionConfig::SOURCE_VERSION_NAME] = $imagesPath . $originalFileName . '.' . $ext;
         }
         foreach ($imageVersionsConfigs as $versionName => $imageVersionConfig) {
-			if ($versionName !== ImageVersionConfig::SOURCE_VERSION_NAME) {
-				$profileExt = $imageVersionConfig->isContentTypeConvertRequired()
-					? self::getExtensionByContentType('image/' . $imageVersionConfig->getContentTypeToConvertTo())
-					: $ext;
-				$result[$versionName] = $profileExt
-					? $imagesPath . $fileName . $imageVersionConfig->getFileNameSuffix($versionName) . '.' . $profileExt
-					: '';
-			}
+            if ($versionName !== ImageVersionConfig::SOURCE_VERSION_NAME) {
+                $profileExt = $imageVersionConfig->isContentTypeConvertRequired()
+                    ? self::getExtensionByContentType('image/' . $imageVersionConfig->getContentTypeToConvertTo())
+                    : $ext;
+                $result[$versionName] = $profileExt
+                    ? $imagesPath . $fileName . $imageVersionConfig->getFileNameSuffix($versionName) . '.' . $profileExt
+                    : '';
+            }
         }
         return str_ireplace(['/', '\\'], DIRECTORY_SEPARATOR , $result);
     }
