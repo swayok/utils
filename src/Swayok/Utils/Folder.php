@@ -491,7 +491,7 @@ class Folder {
         foreach ($iterator as $itemPath => $fsIterator) {
             if ($skipHidden) {
                 $subPathName = $fsIterator->getSubPathname();
-                if ($subPathName{0} === '.' || strpos($subPathName, DIRECTORY_SEPARATOR . '.') !== false) {
+                if ($subPathName[0] === '.' || strpos($subPathName, DIRECTORY_SEPARATOR . '.') !== false) {
                     continue;
                 }
             }
@@ -857,6 +857,9 @@ class Folder {
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/file-folder.html#Folder::isSlashTerm
      */
     public static function isSlashTerm($path) {
+        if (!$path) {
+            return false;
+        }
         $lastChar = $path[strlen($path) - 1];
         return $lastChar === '/' || $lastChar === '\\';
     }
