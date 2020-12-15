@@ -60,6 +60,8 @@ abstract class NormalizeValue {
             return '""';
         } else if ($value === null) {
             return null;
+        } else if (is_string($value) && preg_match('%^".*"$%', $value) && json_decode($value) !== null) {
+            return $value;
         } else {
             return !is_string($value) && ValidateValue::isFloat($value) ? "$value" : json_encode($value, JSON_UNESCAPED_UNICODE);
         }
