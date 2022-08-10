@@ -24,8 +24,9 @@ namespace Swayok\Utils;
  * Class used for manipulation of arrays.
  *
  */
-class Set {
-
+class Set
+{
+    
     /**
      * Maps the given value as an object. If $value is an object,
      * it returns $value. Otherwise it maps $value as an object of
@@ -39,11 +40,12 @@ class Set {
      * @param boolean $primary whether to assign first array key as the _name_
      * @return mixed Mapped object
      */
-    protected static function _map(&$array, $class, $primary = false) {
+    protected static function _map(&$array, $class, $primary = false)
+    {
         if ($class === true) {
             $out = new \stdClass();
         } else {
-            $out = new $class;
+            $out = new $class();
         }
         if (is_array($array)) {
             $keys = array_keys($array);
@@ -95,7 +97,7 @@ class Set {
         }
         return $out;
     }
-
+    
     /**
      * Checks to see if all the values in the array are numeric
      *
@@ -103,7 +105,8 @@ class Set {
      * @return boolean true if values are numeric, false otherwise
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/set.html#Set::numeric
      */
-    protected static function numeric($array = null) {
+    protected static function numeric($array = null)
+    {
         if (empty($array)) {
             return false;
         }
@@ -111,7 +114,7 @@ class Set {
         $str = implode('', $values);
         return (bool)ctype_digit($str);
     }
-
+    
     /**
      * Returns a series of values extracted from an array, formatted in a format string.
      *
@@ -121,27 +124,28 @@ class Set {
      * @return array An array of strings extracted from $keys and formatted with $format
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/set.html#Set::format
      */
-    public static function format($data, $format, $keys) {
-        $extracted = array();
+    public static function format($data, $format, $keys)
+    {
+        $extracted = [];
         $count = count($keys);
-
+        
         if (!$count) {
             return false;
         }
-
+        
         $data = self::prepareDataArray($data);
         for ($i = 0; $i < $count; $i++) {
             $extracted[] = self::extract($data, $keys[$i]);
         }
-        $out = array();
+        $out = [];
         $data = $extracted;
         $count = count($data[0]);
-
+        
         if (preg_match_all('/\{([0-9]+)\}/msi', $format, $keys2) && isset($keys2[1])) {
             $keys = $keys2[1];
             $format = preg_split('/\{([0-9]+)\}/msi', $format);
             $count2 = count($format);
-
+            
             for ($j = 0; $j < $count; $j++) {
                 $formatted = '';
                 for ($i = 0; $i <= $count2; $i++) {
@@ -157,7 +161,7 @@ class Set {
         } else {
             $count2 = count($data);
             for ($j = 0; $j < $count; $j++) {
-                $args = array();
+                $args = [];
                 for ($i = 0; $i < $count2; $i++) {
                     if (array_key_exists($j, $data[$i])) {
                         $args[] = $data[$i][$j];
@@ -168,7 +172,7 @@ class Set {
         }
         return $out;
     }
-
+    
     /**
      * Implements partial support for XPath 2.0. If $path does not contain a '/' the call
      * is delegated to self::classicExtract(). Also the $path and $data arguments are
@@ -203,31 +207,32 @@ class Set {
      * @return array An array of matched items
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/set.html#Set::extract
      */
-    public static function extract($path, $data = null, $options = array()) {
+    public static function extract($path, $data = null, $options = [])
+    {
         if (is_string($data)) {
             $tmp = $data;
             $data = $path;
             $path = $tmp;
         }
         if (empty($data)) {
-            return array();
+            return [];
         }
         if ($path === '/') {
             return $data;
-        } else if ($path === '@') {
+        } elseif ($path === '@') {
             return array_keys($data);
         }
-
+        
         $contexts = $data;
-        $options = array_merge(array('flatten' => true), $options);
+        $options = array_merge(['flatten' => true], $options);
         if (!isset($contexts[0])) {
             $current = current($data);
             if ((is_array($current) && count($data) < 1) || !is_array($current) || !self::numeric(array_keys($data))) {
-                $contexts = array($data);
+                $contexts = [$data];
             }
         }
         $tokens = array_slice(preg_split('/(?<!=|\\\\)\/(?![a-z-\s]*\])/', $path), 1);
-
+        
         do {
             $token = array_shift($tokens);
             /** @var array|bool $conditions */
@@ -236,10 +241,10 @@ class Set {
                 $conditions = $m[1];
                 $token = substr($token, 0, strpos($token, '['));
             }
-            $matches = array();
+            $matches = [];
             foreach ($contexts as $key => $context) {
                 if (!isset($context['trace'])) {
-                    $context = array('trace' => array(null), 'item' => $context, 'key' => $key);
+                    $context = ['trace' => [null], 'item' => $context, 'key' => $key];
                 }
                 if ($token === '..') {
                     if (count($context['trace']) === 1) {
@@ -259,44 +264,44 @@ class Set {
                     continue;
                 }
                 if ($token === '@' && is_array($context['item'])) {
-                    $matches[] = array(
+                    $matches[] = [
                         'trace' => array_merge($context['trace'], (array)$key),
                         'key' => $key,
                         'item' => $key,
-                    );
+                    ];
                 } elseif ($token === '@*' && is_array($context['item'])) {
-                    $matches[] = array(
+                    $matches[] = [
                         'trace' => array_merge($context['trace'], (array)$key),
                         'key' => $key,
                         'item' => array_keys($context['item']),
-                    );
+                    ];
                 } elseif (is_array($context['item'])
                     && array_key_exists($token, $context['item'])
                     && !(strval($key) === strval($token) && count($tokens) === 1 && $tokens[0] === '.')) {
                     $items = $context['item'][$token];
                     if (!is_array($items)) {
-                        $items = array($items);
+                        $items = [$items];
                     } elseif (!isset($items[0])) {
                         $current = current($items);
                         $currentKey = key($items);
                         if (!is_array($current) || (is_array($current) && count($items) <= 1 && !is_numeric($currentKey))) {
-                            $items = array($items);
+                            $items = [$items];
                         }
                     }
-
+                    
                     foreach ($items as $key2 => $item) {
-                        $ctext = array($context['key']);
+                        $ctext = [$context['key']];
                         if (!is_numeric($key2)) {
                             $ctext[] = $token;
                             $tok = array_shift($tokens);
                             if (isset($items[$tok])) {
                                 $ctext[] = $tok;
                                 $item = $items[$tok];
-                                $matches[] = array(
+                                $matches[] = [
                                     'trace' => array_merge($context['trace'], $ctext),
                                     'key' => $tok,
                                     'item' => $item,
-                                );
+                                ];
                                 break;
                             } elseif ($tok !== null) {
                                 array_unshift($tokens, $tok);
@@ -304,28 +309,28 @@ class Set {
                         } else {
                             $key2 = $token;
                         }
-
-                        $matches[] = array(
+                        
+                        $matches[] = [
                             'trace' => array_merge($context['trace'], $ctext),
                             'key' => $key2,
                             'item' => $item,
-                        );
+                        ];
                     }
                 } elseif ($key === $token || (ctype_digit($token) && $key == $token) || $token === '.') {
                     $context['trace'][] = $key;
-                    $matches[] = array(
+                    $matches[] = [
                         'trace' => $context['trace'],
                         'key' => $key,
                         'item' => $context['item'],
-                    );
+                    ];
                 }
             }
             if ($conditions) {
                 foreach ($conditions as $condition) {
-                    $filtered = array();
+                    $filtered = [];
                     $length = count($matches);
                     foreach ($matches as $i => $match) {
-                        if (self::matches(array($condition), $match['item'], $i + 1, $length)) {
+                        if (self::matches([$condition], $match['item'], $i + 1, $length)) {
                             $filtered[$i] = $match;
                         }
                     }
@@ -333,45 +338,47 @@ class Set {
                 }
             }
             $contexts = $matches;
-
+            
             if (empty($tokens)) {
                 break;
             }
         } while (1);
-
-        $r = array();
-
+        
+        $r = [];
+        
         foreach ($matches as $match) {
             if ((!$options['flatten'] || is_array($match['item'])) && !is_int($match['key'])) {
-                $r[] = array($match['key'] => $match['item']);
+                $r[] = [$match['key'] => $match['item']];
             } else {
                 $r[] = $match['item'];
             }
         }
         return $r;
     }
-
+    
     /**
      * @param mixed $data
      * @return mixed
      */
-    static protected function prepareDataArray($data) {
+    static protected function prepareDataArray($data)
+    {
         if (is_object($data)) {
             if ($data instanceof \Traversable) {
                 $data = self::convertIteratableObjectToArray($data);
-            } else if (!($data instanceof \ArrayAccess)) {
+            } elseif (!($data instanceof \ArrayAccess)) {
                 $data = get_object_vars($data);
             }
         }
         return $data;
     }
-
+    
     /**
      * @param \Traversable $object
      * @return array;
      */
-    static protected function convertIteratableObjectToArray(\Traversable $object) {
-        $ret = array();
+    static protected function convertIteratableObjectToArray(\Traversable $object)
+    {
+        $ret = [];
         foreach ($object as $key => $item) {
             if ($item instanceof \Traversable) {
                 $ret[$key] = static::convertIteratableObjectToArray($item);
@@ -381,7 +388,7 @@ class Set {
         }
         return $ret;
     }
-
+    
     /**
      * This function can be used to see if a single item or a given xpath match certain conditions.
      *
@@ -392,7 +399,8 @@ class Set {
      * @return boolean
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/set.html#Set::matches
      */
-    protected static function matches($conditions, $data = array(), $i = null, $length = null) {
+    protected static function matches($conditions, $data = [], $i = null, $length = null)
+    {
         if (empty($conditions)) {
             return true;
         }
@@ -428,9 +436,9 @@ class Set {
             if (!(isset($data[$key]) || array_key_exists($key, $data))) {
                 return false;
             }
-
+            
             $val = $data[$key];
-
+            
             if ($op === '=' && $expected && $expected[0] === '/') {
                 return preg_match($expected, $val);
             }
@@ -455,7 +463,7 @@ class Set {
         }
         return true;
     }
-
+    
     /**
      * Checks if a particular path is set in an array
      *
@@ -464,14 +472,15 @@ class Set {
      * @return boolean true if path is found, false otherwise
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/set.html#Set::check
      */
-    public static function check($data, $path = null) {
+    public static function check($data, $path = null)
+    {
         if (empty($path)) {
             return $data;
         }
         if (!is_array($path)) {
             $path = explode('.', $path);
         }
-
+        
         foreach ($path as $i => $key) {
             if ((is_numeric($key) && (int)$key > 0) || $key === '0') {
                 $key = (int)$key;
@@ -479,7 +488,7 @@ class Set {
             if ($i === count($path) - 1) {
                 return (is_array($data) && array_key_exists($key, $data));
             }
-
+            
             if (!is_array($data) || !array_key_exists($key, $data)) {
                 return false;
             }
@@ -487,7 +496,7 @@ class Set {
         }
         return true;
     }
-
+    
     /**
      * Computes the difference between a Set and an array, two Sets, or two arrays
      *
@@ -497,7 +506,8 @@ class Set {
      * The expression for this function is($val1 - $val2) + ($val2 - ($val1 - $val2))
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/set.html#Set::diff
      */
-    public static function diff($val1, $val2 = null) {
+    public static function diff($val1, $val2 = null)
+    {
         if (empty($val1)) {
             return (array)$val2;
         }
@@ -512,10 +522,10 @@ class Set {
             }
             next($intersection);
         }
-
+        
         return $val1 + $val2;
     }
-
+    
     /**
      * Determines if one Set or array contains the exact keys and values of another.
      *
@@ -524,11 +534,12 @@ class Set {
      * @return boolean true if $val1 contains $val2, false otherwise
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/set.html#Set::contains
      */
-    public static function contains($val1, $val2 = null) {
+    public static function contains($val1, $val2 = null)
+    {
         if (empty($val1) || empty($val2)) {
             return false;
         }
-
+        
         foreach ($val2 as $key => $val) {
             if (is_numeric($key)) {
                 self::contains($val, $val1);
@@ -540,7 +551,7 @@ class Set {
         }
         return true;
     }
-
+    
     /**
      * Counts the dimensions of an array. If $all is set to false (which is the default) it will
      * only consider the dimension of the first element in the array.
@@ -551,9 +562,10 @@ class Set {
      * @return integer The number of dimensions in $array
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/set.html#Set::countDim
      */
-    protected static function countDim($array = null, $all = false, $count = 0) {
+    protected static function countDim($array = null, $all = false, $count = 0)
+    {
         if ($all) {
-            $depth = array($count);
+            $depth = [$count];
             if (is_array($array) && reset($array) !== false) {
                 foreach ($array as $value) {
                     $depth[] = self::countDim($value, true, $count + 1);
@@ -569,7 +581,7 @@ class Set {
         }
         return $return;
     }
-
+    
     /**
      * Creates an associative array using a $path1 as the path to build its keys, and optionally
      * $path2 as path to get the values. If $path2 is not specified, all values will be initialized
@@ -585,13 +597,14 @@ class Set {
      * @return array Combined array
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/set.html#Set::combine
      */
-    public static function combine($data, $path1 = null, $path2 = null, $groupPath = null) {
+    public static function combine($data, $path1 = null, $path2 = null, $groupPath = null)
+    {
         if (empty($data)) {
-            return array();
+            return [];
         }
-
+        
         $data = self::prepareDataArray($data);
-
+        
         if (is_array($path1)) {
             $format = array_shift($path1);
             $keys = self::format($data, $format, $path1);
@@ -599,9 +612,9 @@ class Set {
             $keys = self::extract($data, $path1);
         }
         if (empty($keys)) {
-            return array();
+            return [];
         }
-        $vals = array();
+        $vals = [];
         if (!empty($path2) && is_array($path2)) {
             $format = array_shift($path2);
             $vals = self::format($data, $format, $path2);
@@ -613,19 +626,19 @@ class Set {
                 $vals[$i] = null;
             }
         }
-
+        
         if ($groupPath) {
             $group = self::extract($data, $groupPath);
             $useIndexesAsKeys = substr($path1, -1) === '@';
             if (!empty($group)) {
                 $c = count($keys);
-                $out = array();
+                $out = [];
                 for ($i = 0; $i < $c; $i++) {
                     if (!isset($group[$i])) {
                         $group[$i] = 0;
                     }
                     if (!isset($out[$group[$i]])) {
-                        $out[$group[$i]] = array();
+                        $out[$group[$i]] = [];
                     }
                     if ($useIndexesAsKeys) {
                         $out[$group[$i]][] = $vals[$i];
@@ -637,11 +650,11 @@ class Set {
             }
         }
         if (empty($vals)) {
-            return array();
+            return [];
         }
         return array_combine($keys, $vals);
     }
-
+    
     /**
      * Collapses a multi-dimensional array into a single dimension, using a delimited array path for
      * each array element's key, i.e. array(array('Foo' => array('Bar' => 'Far'))) becomes
@@ -652,20 +665,21 @@ class Set {
      * @return array
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/hash.html#Hash::flatten
      */
-    public static function flatten(array $data, $separator = '.') {
-        $result = array();
-        $stack = array();
+    public static function flatten(array $data, $separator = '.')
+    {
+        $result = [];
+        $stack = [];
         $path = null;
-
+        
         reset($data);
         while (!empty($data)) {
             $key = key($data);
             $element = $data[$key];
             unset($data[$key]);
-
+            
             if (is_array($element) && !empty($element)) {
                 if (!empty($data)) {
-                    $stack[] = array($data, $path);
+                    $stack[] = [$data, $path];
                 }
                 $data = $element;
                 reset($data);
@@ -673,7 +687,7 @@ class Set {
             } else {
                 $result[$path . $key] = $element;
             }
-
+            
             if (empty($data) && !empty($stack)) {
                 list($data, $path) = array_pop($stack);
                 reset($data);
@@ -681,7 +695,7 @@ class Set {
         }
         return $result;
     }
-
+    
     /**
      * Flattens an array for sorting
      *
@@ -689,8 +703,9 @@ class Set {
      * @param string $key
      * @return array
      */
-    protected static function _flatten($results, $key = null) {
-        $stack = array();
+    protected static function _flatten($results, $key = null)
+    {
+        $stack = [];
         foreach ($results as $k => $r) {
             $id = $k;
             if (!is_null($key)) {
@@ -699,12 +714,12 @@ class Set {
             if (is_array($r) && !empty($r)) {
                 $stack = array_merge($stack, self::_flatten($r, $id));
             } else {
-                $stack[] = array('id' => $id, 'value' => $r);
+                $stack[] = ['id' => $id, 'value' => $r];
             }
         }
         return $stack;
     }
-
+    
     /**
      * Sorts an array by any value, determined by a Set-compatible path
      *
@@ -714,7 +729,8 @@ class Set {
      * @return array Sorted array of data
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/set.html#Set::sort
      */
-    public static function sort($data, $path, $dir) {
+    public static function sort($data, $path, $dir)
+    {
         if (empty($data)) {
             return $data;
         }
@@ -726,8 +742,8 @@ class Set {
             $numeric = true;
         }
         $result = self::_flatten(self::extract($data, $path));
-        list($keys, $values) = array(self::extract($result, '{n}.id'), self::extract($result, '{n}.value'));
-
+        list($keys, $values) = [self::extract($result, '{n}.id'), self::extract($result, '{n}.value')];
+        
         $dir = strtolower($dir);
         if ($dir === 'asc') {
             $dir = SORT_ASC;
@@ -735,9 +751,9 @@ class Set {
             $dir = SORT_DESC;
         }
         array_multisort($values, $dir, $keys, $dir);
-        $sorted = array();
+        $sorted = [];
         $keys = array_unique($keys);
-
+        
         foreach ($keys as $k) {
             if ($numeric) {
                 $sorted[] = $data[$k];
@@ -751,7 +767,7 @@ class Set {
         }
         return $sorted;
     }
-
+    
     /**
      * Allows the application of a callback method to elements of an
      * array extracted by a self::extract() compatible path.
@@ -768,22 +784,23 @@ class Set {
      * @return mixed Result of the callback when applied to extracted data
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/set.html#Set::apply
      */
-    public static function apply($path, $data, $callback, $options = array()) {
-        $defaults = array('type' => 'pass');
+    public static function apply($path, $data, $callback, $options = [])
+    {
+        $defaults = ['type' => 'pass'];
         $options = array_merge($defaults, $options);
         $data = self::prepareDataArray($data);
         $extracted = self::extract($path, $data);
-
+        
         if ($options['type'] === 'map') {
             return array_map($callback, $extracted);
         } elseif ($options['type'] === 'reduce') {
             return array_reduce($extracted, $callback);
         } elseif ($options['type'] === 'pass') {
-            return call_user_func_array($callback, array($extracted));
+            return call_user_func_array($callback, [$extracted]);
         }
         return null;
     }
-
+    
     /**
      * Takes in a flat array and returns a nested array
      *
@@ -793,27 +810,28 @@ class Set {
      * @param string $childrenKey
      * @return array of results, nested
      */
-    public static function nest($data, $idPath = '/id', $parentPath = '/parent_id', $childrenKey = 'children') {
+    public static function nest($data, $idPath = '/id', $parentPath = '/parent_id', $childrenKey = 'children')
+    {
         if (!$data) {
             return $data;
         }
-
+        
         $data = self::prepareDataArray($data);
-        $return = $idMap = array();
+        $return = $idMap = [];
         $ids = self::extract($data, $idPath);
         $idKeys = explode('/', trim($idPath, '/'));
         $parentKeys = explode('/', trim($parentPath, '/'));
-
+        
         foreach ($data as $result) {
-            $result[$childrenKey] = array();
-
+            $result[$childrenKey] = [];
+            
             $id = self::get($result, $idKeys);
             $parentId = self::get($result, $parentKeys);
-
+            
             if (isset($idMap[$id][$childrenKey])) {
                 $idMap[$id] = array_merge($result, (array)$idMap[$id]);
             } else {
-                $idMap[$id] = array_merge($result, array($childrenKey => array()));
+                $idMap[$id] = array_merge($result, [$childrenKey => []]);
             }
             if (!$parentId || !in_array($parentId, $ids, true)) {
                 $return[] =& $idMap[$id];
@@ -823,7 +841,7 @@ class Set {
         }
         return array_values($return);
     }
-
+    
     /**
      * Return the value at the specified position
      *
@@ -832,7 +850,8 @@ class Set {
      * @param null $default
      * @return mixed the value at the specified position or null if it doesn't exist
      */
-    public static function get($input, $path = null, $default = null) {
+    public static function get($input, $path = null, $default = null)
+    {
         if (empty($path)) {
             return $input;
         }
@@ -857,5 +876,5 @@ class Set {
         }
         return $input;
     }
-
+    
 }

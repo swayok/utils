@@ -2,32 +2,35 @@
 
 namespace Swayok\Utils;
 
-class CookieException extends \Exception {}
+use Swayok\Utils\Exception\CookieException;
 
-class Cookie {
-
+class Cookie
+{
+    
     static public $encryptionKey;
-    static protected $decryptedValues = array();
+    static protected $decryptedValues = [];
     static protected $encryptionPrefix = 'QxfH8kM2FtTk29t';
-
+    
     /**
      * @return string
      * @throws CookieException
      */
-    public static function getEncryptionKey() {
+    public static function getEncryptionKey()
+    {
         if (empty(self::$encryptionKey)) {
             throw new CookieException('Encryption key is not provided');
         }
         return self::$encryptionKey;
     }
-
+    
     /**
      * @param string $encryptionKey
      */
-    public static function setEncryptionKey($encryptionKey) {
+    public static function setEncryptionKey($encryptionKey)
+    {
         self::$encryptionKey = $encryptionKey;
     }
-
+    
     /**
      * Write a value to the $_COOKIE[$name];
      *
@@ -49,34 +52,35 @@ class Cookie {
      * )
      * @return void
      */
-    static public function set($name, $value = null, $expiresIn = 0, $options = array()) {
+    public static function set($name, $value = null, $expiresIn = 0, $options = [])
+    {
         if (headers_sent()) {
             return;
         }
         if (is_array($name) && empty($options) && !empty($value)) {
             $options = $value;
         }
-        $defaults = array(
+        $defaults = [
             'domain' => '',
             'path' => '/',
             'encrypt' => true,
             'secure' => false,
-            'httpOnly' => true
-        );
+            'httpOnly' => true,
+        ];
         if (!is_array($options)) {
             $options = $defaults;
         } else {
             $options = array_replace($defaults, $options);
         }
         if (!is_array($name)) {
-            $name = array($name => $value);
+            $name = [$name => $value];
         }
-
-        foreach ($name as $key => $value) {
-            self::$decryptedValues[$key] = $value;
+        
+        foreach ($name as $key => $keyValue) {
+            self::$decryptedValues[$key] = $keyValue;
             $expires = self::calcExpiration($expiresIn);
             if ($expires == 0 || $expires >= time()) {
-                $_COOKIE[$key] = self::encrypt($value, $options['encrypt']);
+                $_COOKIE[$key] = self::encrypt($keyValue, $options['encrypt']);
             } else {
                 $_COOKIE[$key] = '';
             }
@@ -91,57 +95,60 @@ class Cookie {
             );
         }
     }
-
+    
     /**
      * Calculate expiration time
      * @param int|string|null $time - int: number of seconds till expiration | string: valid value for strtotime() | empty: expires when browser closed
      * @return int
      */
-    static protected function calcExpiration($time) {
+    protected static function calcExpiration($time)
+    {
         if (empty($time)) {
             $time = 0;
-        } else if (is_numeric($time)) {
-            $time = time() + intval($time);
+        } elseif (is_numeric($time)) {
+            $time = time() + (int)$time;
         } else {
-            $time = intval(strtotime($time));
+            $time = (int)strtotime($time);
         }
         return $time;
     }
-
+    
     /**
      * Read the value of the $_COOKIE[$name];
      * @param string $name - Key of the value to be obtained. If none specified, obtain map key => values
      * @return string|null - value for specified key
      */
-    static public function get($name = null) {
+    public static function get($name = null)
+    {
         if (is_null($name)) {
             // all cookies
             self::$decryptedValues = self::decrypt($_COOKIE);
             return self::$decryptedValues;
-        } else if (empty(self::$decryptedValues[$name]) && isset($_COOKIE[$name])) {
+        } elseif (empty(self::$decryptedValues[$name]) && isset($_COOKIE[$name])) {
             // single key
             self::$decryptedValues[$name] = self::decrypt($_COOKIE[$name]);
         }
-
+        
         if (isset(self::$decryptedValues[$name])) {
             return self::$decryptedValues[$name];
         } else {
             return null;
         }
     }
-
+    
     /**
      * Return true if given variable is set in cookie.
      * @param string $name - cookie key to test
      * @return boolean - true: cookie exists
      */
-    static public function exists($name = null) {
+    public static function exists($name = null)
+    {
         if (empty($name)) {
             return false;
         }
         return self::get($name) !== null;
     }
-
+    
     /**
      * Delete a cookie value
      * Note: You must use this method before any output is sent to the browser.
@@ -152,24 +159,26 @@ class Cookie {
      * @param bool $httpOnly - cookie used only via http (default: true)
      * @param bool $secure - cookie used only in SSL
      */
-    static public function delete($name, $domain = '', $path = '/', $httpOnly = false, $secure = false) {
-        $options = array(
+    public static function delete($name, $domain = '', $path = '/', $httpOnly = false, $secure = false)
+    {
+        $options = [
             'domain' => $domain,
             'path' => $path,
             'secure' => $secure,
             'httpOnly' => $httpOnly,
-        );
+        ];
         self::set($name, '', -42000, $options);
         unset(self::$decryptedValues[$name], $_COOKIE[$name]);
     }
-
+    
     /**
      * Encrypt $value using public $type method in Security class
-     * @param string $value - Value to encrypt
+     * @param string|array $value - Value to encrypt
      * @param bool $enctrypt - false: no encryption
      * @return string - Encoded values
      */
-    static protected function encrypt($value, $enctrypt = true) {
+    protected static function encrypt($value, $enctrypt = true)
+    {
         if (is_array($value)) {
             $value = self::implode($value);
         }
@@ -178,19 +187,19 @@ class Cookie {
         }
         return $value;
     }
-
+    
     /**
      * Decrypt $value using public $type method in Security class
      * @param array $values Values to decrypt
      * @return string decrypted string
      */
-    static protected function decrypt($values) {
-        $decrypted = null;
+    protected static function decrypt($values)
+    {
         if (!is_array($values)) {
-            $values = array($values);
+            $values = [$values];
             $decrypted = null;
         } else {
-            $decrypted = array();
+            $decrypted = [];
         }
         foreach ((array)$values as $name => $value) {
             if (is_array($value)) {
@@ -212,23 +221,28 @@ class Cookie {
         }
         return $decrypted;
     }
-
+    
     /**
      * Used to implode arrays to store then in cookie values
      * @param array $array
      * @return string - A json encoded string.
      */
-    static protected function implode(array $array) {
+    protected static function implode(array $array)
+    {
         return json_encode($array);
     }
-
+    
     /**
      * Decodes imploded arrays stored in cookie values (reverts imploding)
      * @param string $string - A string containing JSON encoded data, or a bare string.
      * @return array|string - array: Map of key and values | string: $string
      */
-    static protected function explode($string) {
-        $first = substr($string, 0, 1);
+    protected static function explode($string)
+    {
+        if (!is_string($string) || $string === '') {
+            return '';
+        }
+        $first = $string[0];
         if ($first === '{' || $first === '[') {
             $ret = json_decode($string, true);
             return ($ret) ? $ret : $string;

@@ -1,23 +1,25 @@
 {
-  "name": "swayok/utils",
-  "type": "library",
-  "description": "Utility classes",
-  "keywords": [
-    "php",
-    "utility",
-    "helpers",
-    "web"
-  ],
-  "authors": [
-    {
-      "name": "Alexander Filippov"
+    "name": "swayok/utils",
+    "type": "library",
+    "description": "Utility classes",
+    "keywords": [
+        "php",
+        "utility",
+        "helpers",
+        "web"
+    ],
+    "authors": [
+        {
+            "name": "Alexander Filippov"
+        }
+    ],
+    "license": "MIT",
+    "support": {
+        "issues": "https://github.com/swayok/utils/issues"
+    },
+    "autoload": {
+        "psr-0": {
+            "Swayok": "/src"
+        }
     }
-  ],
-  "license": "MIT",
-  "support": {
-    "issues": "https://github.com/swayok/utils/issues"
-  },
-  "autoload": {
-      "psr-0": { "Swayok": "/src" }
-  }
 }

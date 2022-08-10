@@ -2,8 +2,9 @@
 
 namespace Swayok\Utils;
 
-abstract class ValidateValue {
-
+abstract class ValidateValue
+{
+    
     const INTEGER_REGEXP = '%^-?\d+(\.0+)?$%';
     const FLOAT_REGEXP = '%^-?\d+(\.\d+)?$%';
     const IP_ADDRESS_REGEXP = '%^(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)$%';
@@ -20,13 +21,14 @@ abstract class ValidateValue {
         'jpeg' => 'image/jpeg',
         'png' => 'image/png',
         'gif' => 'image/gif',
-        'svg' => 'image/svg'
+        'svg' => 'image/svg',
     ];
-
-    static public function isInteger(&$value, $convert = false) {
-        if (is_int($value)){
+    
+    public static function isInteger(&$value, $convert = false)
+    {
+        if (is_int($value)) {
             return true;
-        } else if ((is_string($value) || is_numeric($value)) && preg_match(self::INTEGER_REGEXP, (string)$value)) {
+        } elseif ((is_string($value) || is_numeric($value)) && preg_match(self::INTEGER_REGEXP, (string)$value)) {
             if ($convert) {
                 $value = (int)$value;
             }
@@ -35,11 +37,12 @@ abstract class ValidateValue {
             return false;
         }
     }
-
-    static public function isFloat(&$value, $convert = false) {
+    
+    public static function isFloat(&$value, $convert = false)
+    {
         if (is_float($value) || is_int($value)) {
             return true;
-        } else if (is_string($value) && preg_match(self::FLOAT_REGEXP, $value)) {
+        } elseif (is_string($value) && preg_match(self::FLOAT_REGEXP, $value)) {
             if ($convert) {
                 $value = (float)$value;
             }
@@ -48,16 +51,17 @@ abstract class ValidateValue {
             return false;
         }
     }
-
-    static public function isBoolean(&$value, $convert = false) {
+    
+    public static function isBoolean(&$value, $convert = false)
+    {
         if (is_bool($value)) {
             return true;
-        } else if (is_string($value) && ($value === '1' || $value === '0')) {
+        } elseif (is_string($value) && ($value === '1' || $value === '0')) {
             if ($convert) {
                 $value = $value === '1';
             }
             return true;
-        } else if (is_int($value) && ($value === 1 || $value === 0)) {
+        } elseif (is_int($value) && ($value === 1 || $value === 0)) {
             if ($convert) {
                 $value = $value === 1;
             }
@@ -66,11 +70,12 @@ abstract class ValidateValue {
             return false;
         }
     }
-
-    static public function isDateTime(&$value, $convertToUnixTs = false) {
+    
+    public static function isDateTime(&$value, $convertToUnixTs = false)
+    {
         if (ValidateValue::isInteger($value)) {
             return (int)$value > 0;
-        } else if (is_string($value) && strtotime($value) > 0) {
+        } elseif (is_string($value) && strtotime($value) > 0) {
             if ($convertToUnixTs) {
                 $value = strtotime($value);
             }
@@ -79,35 +84,41 @@ abstract class ValidateValue {
             return false;
         }
     }
-
-    static public function isDateTimeWithTz($value) {
+    
+    public static function isDateTimeWithTz($value)
+    {
         if (is_string($value) && !is_numeric($value) && strtotime($value) > 0) {
             return true;
         } else {
             return false;
         }
     }
-
-    static public function isIpAddress($value) {
+    
+    public static function isIpAddress($value)
+    {
         return is_string($value) && preg_match(self::IP_ADDRESS_REGEXP, $value);
     }
-
-    static public function isEmail($value) {
+    
+    public static function isEmail($value)
+    {
         return is_string($value) && preg_match(self::EMAIL_REGEXP, $value);
     }
-
-    static public function isSha1($value) {
+    
+    public static function isSha1($value)
+    {
         return is_string($value) && preg_match(self::SHA1_REGEXP, $value);
     }
-
-    static public function isMd5($value) {
+    
+    public static function isMd5($value)
+    {
         return is_string($value) && preg_match(self::MD5_REGEXP, $value);
     }
-
-    static public function isJson(&$value, $decode = false) {
+    
+    public static function isJson(&$value, $decode = false)
+    {
         if (is_array($value) || is_bool($value) || $value === null) {
             return true;
-        } else if (!is_string($value) && !is_numeric($value)) {
+        } elseif (!is_string($value) && !is_numeric($value)) {
             return false;
         }
         $decoded = json_decode($value, true);
@@ -119,13 +130,14 @@ abstract class ValidateValue {
         }
         return false;
     }
-
+    
     /**
      * @param mixed $value
      * @param bool $acceptNotUploadedFiles - true: use File::exist($value['tmp_name']) | false: use is_uploaded_file($value['tmp_name'])
      * @return bool
      */
-    static public function isUploadedFile($value, $acceptNotUploadedFiles = false) {
+    public static function isUploadedFile($value, $acceptNotUploadedFiles = false)
+    {
         if (is_array($value)) {
             return (
                 array_key_exists('error', $value)
@@ -140,7 +152,7 @@ abstract class ValidateValue {
                     || is_uploaded_file($value['tmp_name'])
                 )
             );
-        } else if (is_object($value) && $value instanceof \SplFileInfo) {
+        } elseif (is_object($value) && $value instanceof \SplFileInfo) {
             $symphonyUpload = 'Symfony\Component\HttpFoundation\File\UploadedFile';
             if ($value instanceof $symphonyUpload) {
                 /** @var \Symfony\Component\HttpFoundation\File\UploadedFile $value */
@@ -152,20 +164,21 @@ abstract class ValidateValue {
                         || ($acceptNotUploadedFiles && File::exist($value->getPathname()))
                     )
                 );
-            } else if ($acceptNotUploadedFiles) {
+            } elseif ($acceptNotUploadedFiles) {
                 /** @var \SplFileInfo $value */
                 return $value->isFile() && $value->getSize() > 0;
             }
         }
         return false;
     }
-
+    
     /**
      * @param mixed $value
      * @param bool $acceptNotUploadedFiles - true: use File::exist($value['tmp_name']) | false: use is_uploaded_file($value['tmp_name'])
      * @return bool
      */
-    static public function isUploadedImage($value, $acceptNotUploadedFiles = false) {
+    public static function isUploadedImage($value, $acceptNotUploadedFiles = false)
+    {
         if (static::isUploadedFile($value, $acceptNotUploadedFiles)) {
             if (is_array($value)) {
                 $extRegexp = implode('|', array_keys(static::$imageTypes));
@@ -176,7 +189,7 @@ abstract class ValidateValue {
                     || in_array($value['type'], static::$imageTypes, true)
                     || preg_match("%^.+\.($extRegexp)$%i", $value['name']) > 0
                 );
-            } else if ($value instanceof \SplFileInfo) {
+            } elseif ($value instanceof \SplFileInfo) {
                 if (get_class($value) === 'Symfony\Component\HttpFoundation\File\UploadedFile') {
                     /** @var \Symfony\Component\HttpFoundation\File\UploadedFile $value */
                     $mime = $value->getMimeType();
@@ -194,7 +207,7 @@ abstract class ValidateValue {
         }
         return false;
     }
-
+    
     /**
      * $value must be in format: hh:mm or integer.
      * Range actually should be between -12:00 and +14:00 but it is not validated so it might be
@@ -202,19 +215,22 @@ abstract class ValidateValue {
      * @param string $value
      * @return bool
      */
-    static public function isTimezoneOffset($value) {
+    public static function isTimezoneOffset($value)
+    {
         return (
             (static::isInteger($value, true) && $value > -86400 && $value < 86400)
             || (is_string($value) && preg_match('%^(-|\+)?([0-1]\d|2[0-3]):[0-5]\d(:[0-6]\d)?$%', $value))
         );
     }
-
-    static public function isPhoneNumber($value) {
+    
+    public static function isPhoneNumber($value)
+    {
         $phoneUtil = \libphonenumber\PhoneNumberUtil::getInstance();
         return $phoneUtil->isViablePhoneNumber($value);
     }
-
-    static public function isInternationalPhoneNumber(&$value, $convertToInternational = false) {
+    
+    public static function isInternationalPhoneNumber(&$value, $convertToInternational = false)
+    {
         $phoneUtil = \libphonenumber\PhoneNumberUtil::getInstance();
         if ($phoneUtil->isViablePhoneNumber($value)) {
             try {
@@ -232,13 +248,14 @@ abstract class ValidateValue {
         }
         return false;
     }
-
+    
     /**
      * Validates if jpeg file is not currupted
      * @param $filePath
      * @return bool
      */
-    static public function isCorruptedJpeg($filePath) {
+    public static function isCorruptedJpeg($filePath)
+    {
         $file = fopen($filePath, 'rb');
         $ret = false;
         // check for the existence of the EOI segment header at the end of the file

@@ -4,14 +4,16 @@ namespace Swayok\Utils;
 
 use Swayok\Utils\Exception\XmlUtilsException;
 
-abstract class XmlUtils {
-
+abstract class XmlUtils
+{
+    
     /**
      * Convert XML node to array
      * @param \DOMNode $node
      * @return array
      */
-    static public function xmlNodeToArray(\DOMNode $node) {
+    public static function xmlNodeToArray(\DOMNode $node)
+    {
         $output = [];
         switch ($node->nodeType) {
             case XML_CDATA_SECTION_NODE:
@@ -33,7 +35,7 @@ abstract class XmlUtils {
                     }
                 }
                 if ($node->attributes->length && !is_array($output)) { //Has attributes but isn't an array
-                    $output = array('@content' => $output); //Change output into an array.
+                    $output = ['@content' => $output]; //Change output into an array.
                 }
                 if (is_array($output)) {
                     if ($node->attributes->length) {
@@ -55,7 +57,7 @@ abstract class XmlUtils {
         }
         return $output;
     }
-
+    
     /**
      * Convert XML string to array
      * @param string $xmlString
@@ -64,7 +66,8 @@ abstract class XmlUtils {
      * @return array
      * @throws XmlUtilsException
      */
-    static public function xmlStringToArray($xmlString, $xmlVersion = '1.0', $xmlEncoding = 'UTF-8') {
+    public static function xmlStringToArray($xmlString, $xmlVersion = '1.0', $xmlEncoding = 'UTF-8')
+    {
         libxml_use_internal_errors();
         $xml = new \DOMDocument($xmlVersion, $xmlEncoding);
         $xml->loadXML($xmlString);
@@ -78,7 +81,7 @@ abstract class XmlUtils {
         }
         return static::xmlNodeToArray($xml->documentElement);
     }
-
+    
     /**
      * Parse XML file to array
      * @param string $xmlFilePath
@@ -87,7 +90,8 @@ abstract class XmlUtils {
      * @return array
      * @throws XmlUtilsException
      */
-    static public function xmlFileToArray($xmlFilePath, $xmlVersion = '1.0', $xmlEncoding = 'UTF-8') {
+    public static function xmlFileToArray($xmlFilePath, $xmlVersion = '1.0', $xmlEncoding = 'UTF-8')
+    {
         if (!File::exist($xmlFilePath)) {
             throw new XmlUtilsException('File ' . $xmlFilePath . ' does not exist');
         }
