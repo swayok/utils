@@ -21,5 +21,8 @@
         "psr-0": {
             "Swayok": "/src"
         }
+    },
+    "require": {
+        "php": ">=7.0"
     }
 }

@@ -2,7 +2,7 @@
 
 namespace Swayok\Utils;
 
-class Crypt
+abstract class Crypt
 {
     /**
      * Encrypt $value using public $type method in Security class

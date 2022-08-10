@@ -2,7 +2,7 @@
 
 namespace Swayok\Utils;
 
-class StringUtils
+abstract class StringUtils
 {
     
     /**

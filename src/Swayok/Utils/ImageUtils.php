@@ -4,7 +4,7 @@ namespace Swayok\Utils;
 
 use Swayok\Utils\Exception\ImageUtilsException;
 
-class ImageUtils
+abstract class ImageUtils
 {
     
     static public $contentTypeToExtension = [

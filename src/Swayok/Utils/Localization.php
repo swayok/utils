@@ -3,7 +3,7 @@
 namespace Swayok\Utils;
 
 // regions and currencies
-class Localization
+abstract class Localization
 {
     
     const RUSSIAN = 'ru';

@@ -4,7 +4,7 @@ namespace Swayok\Utils;
 
 use Swayok\Utils\Exception\CookieException;
 
-class Cookie
+abstract class Cookie
 {
     
     static public $encryptionKey;

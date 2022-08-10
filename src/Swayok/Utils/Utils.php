@@ -2,7 +2,7 @@
 
 namespace Swayok\Utils;
 
-class Utils
+abstract class Utils
 {
     
     public static function printToStr()

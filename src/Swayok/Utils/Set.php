@@ -24,7 +24,7 @@ namespace Swayok\Utils;
  * Class used for manipulation of arrays.
  *
  */
-class Set
+abstract class Set
 {
     
     /**
