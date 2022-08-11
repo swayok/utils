@@ -14,7 +14,7 @@ abstract class Crypt
     public static function encrypt($method, $data, $password)
     {
         if (is_array($data)) {
-            $data = Utils::jsonEncodeCyrillic($data);
+            $data = json_encode($data, JSON_UNESCAPED_UNICODE);
         }
         if (function_exists('mcrypt_encrypt')) {
             $method = $method . '_encrypt';

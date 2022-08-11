@@ -5,7 +5,7 @@ namespace Swayok\Utils;
 abstract class Utils
 {
     
-    public static function printToStr()
+    public static function printToStr(): string
     {
         $ret = '';
         if (func_num_args()) {
@@ -20,14 +20,14 @@ abstract class Utils
      * @param bool $printObjects
      * @param bool $htmlFormat
      * @param int $ignoreSomeLastTraces - ignore some traqces in the end (by default = 1 to ignore trace of this method)
-     * @return array|string
+     * @return string
      */
     public static function getBackTrace(
-        $returnString = false,
-        $printObjects = false,
-        $htmlFormat = true,
-        $ignoreSomeLastTraces = 1
-    ) {
+        bool $returnString = false,
+        bool $printObjects = false,
+        bool $htmlFormat = true,
+        int $ignoreSomeLastTraces = 1
+    ): string {
         $debug = debug_backtrace($printObjects);
         $ret = [];
         $file = 'unknown';
@@ -74,7 +74,7 @@ abstract class Utils
                 $line['args'] = '';
             }
             if ($htmlFormat) {
-                $ret[] = '<b>#' . $index . '</b> [<font color="#FF7777">' . $line['file'] . '</font>]:' . $line['line'] . ' ' . $function . '(' . htmlentities(
+                $ret[] = '<b>#' . $index . '</b> [<span style="color: #FF7777">' . $line['file'] . '</span>]:' . $line['line'] . ' ' . $function . '(' . htmlentities(
                         $line['args']
                     ) . ')';
             } else {
@@ -83,7 +83,7 @@ abstract class Utils
             $log[] = '#' . $index . ' [' . $line['file'] . ']:' . $line['line'] . ' ' . $function . '(' . $line['args'] . ')';
         }
         if ($htmlFormat) {
-            $ret = '<DIV style="position:relative; z-index:200; padding-left:10px; background-color:#DDDDDD; color:#000000; text-align:left;">' . implode(
+            $ret = '<div style="position:relative; z-index:200; padding-left:10px; background-color:#DDDDDD; color:#000000; text-align:left;">' . implode(
                     '<br/>',
                     $ret
                 ) . '</div><hr/>';
@@ -99,25 +99,12 @@ abstract class Utils
         }
     }
     
-    public static function jsonEncodeCyrillic($data)
-    {
-        if (floatval(phpversion()) >= 5.4) {
-            $json = json_encode($data, JSON_UNESCAPED_UNICODE);
-        } else {
-            $json = json_encode($data);
-            $json = preg_replace_callback('/\\\\u([0-9a-f]{4})/i', function ($match) {
-                return mb_convert_encoding(pack('H*', $match[1]), 'UTF-8', 'UCS-2BE');
-            }, $json);
-        }
-        return $json;
-    }
-    
-    public static function isSuccessfullFileUpload($fileInfo)
+    public static function isSuccessfullFileUpload($fileInfo): bool
     {
         return self::isFileUpload($fileInfo) && empty($fileInfo['error']) && !empty($fileInfo['size']);
     }
     
-    public static function isFileUpload($fileInfo)
+    public static function isFileUpload($fileInfo): bool
     {
         return is_array($fileInfo) && array_key_exists('tmp_name', $fileInfo) && array_key_exists('size', $fileInfo);
     }
@@ -129,19 +116,25 @@ abstract class Utils
      * @param string|int|bool $now - current unix timestamp or any valid strtotime() string
      * @return string
      */
-    public static function formatDateTime($value, $format, $now = 'now')
+    public static function formatDateTime($value, string $format, $now = 'now'): ?string
     {
-        if (is_string($value) && strtotime($value) != 0) {
+        if (is_string($value) && strtotime($value) !== 0) {
             // convert string value to unix timestamp and then to required date format
             if (!is_string($now) && !is_int($now)) {
                 $now = 'now';
             }
-            if (strtolower($now) === 'now' || empty($now)) {
+            if (empty($now) || strtolower($now) === 'now') {
+                /** @noinspection CallableParameterUseCaseInTypeContextInspection */
                 $value = strtotime($value);
             } elseif (is_numeric($now)) {
+                /** @noinspection CallableParameterUseCaseInTypeContextInspection */
                 $value = strtotime($value, $now);
             } else {
+                /** @noinspection CallableParameterUseCaseInTypeContextInspection */
                 $value = strtotime($value, strtotime($now));
+            }
+            if ($value === false) {
+                return null;
             }
         }
         return ValidateValue::isInteger($value, false) ? date($format, $value) : null;

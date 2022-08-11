@@ -2,7 +2,7 @@
 /**
  * Convenience class for reading, writing and appending to files.
  *
- * PHP 5
+ * PHP 7.1
  *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
  * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
@@ -83,38 +83,23 @@ class File
      */
     static protected $lastLoadedFile = null;
     
-    /**
-     * @param string|null $path
-     * @param bool $create
-     * @param int $folderAccess
-     * @param int $fileAccess
-     * @return File
-     */
-    public static function load($path = null, $create = false, $folderAccess = 0777, $fileAccess = 0666)
+    public static function load(string $path, bool $create = false, int $folderAccess = 0777, int $fileAccess = 0666): File
     {
-        if (!empty($path)) {
-            self::$lastLoadedFile = new File($path, $create, $folderAccess, $fileAccess);
-        }
+        self::$lastLoadedFile = new File($path, $create, $folderAccess, $fileAccess);
         return self::$lastLoadedFile;
     }
     
     /**
-     * return last File loaded by self::load()
-     * @return File|null
+     * Return last File loaded by self::load()
      */
-    public static function lastLoaded()
+    public static function lastLoaded(): ?File
     {
         return self::$lastLoadedFile;
     }
     
-    /**
-     * @param string|null $path - null: use self::$lastLoadedFile | string: load that file
-     * @return string
-     */
-    public static function contents($path = null)
+    public static function contents(string $path): string
     {
-        return self::load($path)
-            ->read();
+        return self::load($path)->read();
     }
     
     public static function readJson($path = null, $asArray = true)
@@ -122,30 +107,18 @@ class File
         return json_decode(self::contents($path), $asArray);
     }
     
-    /**
-     * is file exists
-     * @param string|null $path - null: use self::$lastLoadedFile | string: load that file
-     * @return bool
-     */
-    public static function exist($path = null)
+    public static function exist(string $path): bool
     {
-        return self::load($path)
-            ->exists();
+        return self::load($path)->exists();
     }
     
     /**
      * Write/Overwrite contents to file
-     * @param string $path
-     * @param string $data
-     * @param int $filePermissions
-     * @param int $folderPermissions
-     * @return bool
-     * @internal param bool|int|string $permissions
      */
-    public static function save($path, $data, $filePermissions = 0666, $folderPermissions = 0777)
+    public static function save(string $path, string $data, int $filePermissions = 0666, int $folderPermissions = 0777): bool
     {
         return self::load($path, true, $folderPermissions, $filePermissions)
-            ->write($data, 'w');
+            ->write($data);
     }
     
     /**
@@ -156,37 +129,32 @@ class File
      * @param int $filePermissions
      * @return bool
      */
-    public static function saveJson($path, $data, $create = true, $folderPermissions = 0777, $filePermissions = 0666)
+    public static function saveJson(string $path, $data, bool $create = true, int $folderPermissions = 0777, int $filePermissions = 0666, int $flags = 0): bool
     {
         return self::load($path, $create, $folderPermissions, $filePermissions)
-            ->write(Utils::jsonEncodeCyrillic($data), 'w');
+            ->write(json_encode($data, $flags | JSON_UNESCAPED_UNICODE));
     }
     
     /**
      * Append contents to file
      * @param string $path
      * @param string $data
-     * @param string|bool|int $permissions force the file to open
+     * @param null|int $fileAccess - null: do not change permissions
      * @return bool
      */
-    public static function appnd($path, $data, $permissions = false)
+    public static function appnd(string $path, string $data, ?int $fileAccess = null): bool
     {
-        $ret = self::load($path, true)
-            ->write($data, 'a');
-        if ($ret && $permissions) {
-            self::lastLoaded()
-                ->chmod($permissions);
+        $file = self::load($path, true);
+        $ret = $file->write($data, 'a');
+        if ($ret && $fileAccess) {
+            $file->chmod($fileAccess);
         }
+        return $ret;
     }
     
-    /**
-     * @param string $path
-     * @return bool
-     */
-    public static function remove($path = null)
+    public static function remove(string $path): bool
     {
-        return self::load($path)
-            ->delete();
+        return self::load($path)->delete();
     }
     
     /**
@@ -198,7 +166,7 @@ class File
      * @param integer $fileAccess Mode to apply to the folder holding the file
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/file-folder.html#File
      */
-    public function __construct($path, $create = false, $folderAccess = 0755, $fileAccess = 0644)
+    public function __construct(string $path, bool $create = false, int $folderAccess = 0755, int $fileAccess = 0644)
     {
         $this->Folder = new Folder(dirname($path), $create, $folderAccess);
         if (!is_dir($path)) {
@@ -210,21 +178,13 @@ class File
     
     /**
      * Closes the current file if it is opened
-     *
      */
     public function __destruct()
     {
         $this->close();
     }
     
-    /**
-     * Creates the File.
-     *
-     * @param string|int|bool $permissions - permissions
-     * @return boolean Success
-     * @link http://book.cakephp.org/2.0/en/core-utility-libraries/file-folder.html#File::create
-     */
-    public function create($permissions = false)
+    public function create(?int $permissions = null): bool
     {
         $dir = $this->Folder->pwd();
         if (is_dir($dir) && is_writable($dir) && !$this->exists()) {
@@ -238,23 +198,13 @@ class File
         return false;
     }
     
-    /**
-     * Opens the current file with a given $mode
-     *
-     * @param string $mode A valid 'fopen' mode string (r|w|a ...)
-     * @param boolean $force If true then the file will be re-opened even if its already opened, otherwise it won't
-     * @return boolean True on success, false on failure
-     * @link http://book.cakephp.org/2.0/en/core-utility-libraries/file-folder.html#File::open
-     */
-    public function open($mode = 'r', $force = false)
+    public function open(string $mode = 'rb', bool $force = false): bool
     {
         if (!$force && is_resource($this->handle)) {
             return true;
         }
-        if ($this->exists() === false) {
-            if ($this->create() === false) {
-                return false;
-            }
+        if (($this->exists() === false) && $this->create() === false) {
+            return false;
         }
         
         $this->handle = fopen($this->path, $mode);
@@ -267,25 +217,27 @@ class File
     /**
      * Return the contents of this File as a string.
      *
-     * @param string|bool $bytes where to start
+     * @param string|null $bytes where to start
      * @param string $mode A `fread` compatible mode.
      * @param boolean $force If true then the file will be re-opened even if its already opened, otherwise it won't
-     * @return mixed string on success, false on failure
+     * @return null|string string on success, false on failure
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/file-folder.html#File::read
      */
-    public function read($bytes = false, $mode = 'rb', $force = false)
+    public function read(?int $bytes = null, string $mode = 'rb', bool $force = false): ?string
     {
-        if ($bytes === false && $this->lock === null) {
-            return file_get_contents($this->path);
+        if ($bytes === null && $this->lock === null) {
+            $data = file_get_contents($this->path);
+            return $data === false ? null : $data;
         }
         if ($this->open($mode, $force) === false) {
-            return false;
+            return null;
         }
         if ($this->lock !== null && flock($this->handle, LOCK_SH) === false) {
-            return false;
+            return null;
         }
         if (is_int($bytes)) {
-            return fread($this->handle, $bytes);
+            $data = fread($this->handle, $bytes);
+            return $data === false ? null : $data;
         }
         
         $data = '';
@@ -296,7 +248,7 @@ class File
         if ($this->lock !== null) {
             flock($this->handle, LOCK_UN);
         }
-        if ($bytes === false) {
+        if ($bytes === null) {
             $this->close();
         }
         return trim($data);
@@ -305,14 +257,14 @@ class File
     /**
      * Sets or gets the offset for the currently opened file.
      *
-     * @param integer|boolean $offset The $offset in bytes to seek. If set to false then the current offset is returned.
+     * @param integer|null $offset The $offset in bytes to seek. If set to false then the current offset is returned.
      * @param integer $seek PHP Constant SEEK_SET | SEEK_CUR | SEEK_END determining what the $offset is relative to
      * @return mixed True on success, false on failure (set mode), false on failure or integer offset on success (get mode)
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/file-folder.html#File::offset
      */
-    public function offset($offset = false, $seek = SEEK_SET)
+    public function offset(?int $offset = null, int $seek = SEEK_SET)
     {
-        if ($offset === false) {
+        if ($offset === null) {
             if (is_resource($this->handle)) {
                 return ftell($this->handle);
             }
@@ -332,7 +284,7 @@ class File
      * @return string The with converted line endings.
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/file-folder.html#File::prepare
      */
-    public static function prepare($data, $forceWindows = false)
+    public static function prepare(string $data, bool $forceWindows = false): string
     {
         $lineBreak = "\n";
         if (DIRECTORY_SEPARATOR === '\\' || $forceWindows === true) {
@@ -350,7 +302,7 @@ class File
      * @return boolean Success
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/file-folder.html#File::write
      */
-    public function write($data, $mode = 'w', $force = false)
+    public function write(string $data, string $mode = 'wb', bool $force = false): bool
     {
         $success = false;
         if ($this->open($mode, $force) === true) {
@@ -374,11 +326,11 @@ class File
      * Append given data string to this File.
      *
      * @param string $data Data to write
-     * @param string|bool $force force the file to open
+     * @param bool $force force the file to open
      * @return boolean Success
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/file-folder.html#File::append
      */
-    public function append($data, $force = false)
+    public function append(string $data, bool $force = false): bool
     {
         return $this->write($data, 'a', $force);
     }
@@ -389,7 +341,7 @@ class File
      * @return boolean True if closing was successful or file was already closed, otherwise false
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/file-folder.html#File::close
      */
-    public function close()
+    public function close(): bool
     {
         if (!is_resource($this->handle)) {
             return true;
@@ -403,7 +355,7 @@ class File
      * @return boolean Success
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/file-folder.html#File::delete
      */
-    public function delete()
+    public function delete(): bool
     {
         if (is_resource($this->handle)) {
             fclose($this->handle);
@@ -428,7 +380,7 @@ class File
      * @return array File information.
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/file-folder.html#File::info
      */
-    public function info()
+    public function info(): array
     {
         if (!$this->info) {
             $this->info = pathinfo($this->path);
@@ -448,10 +400,10 @@ class File
     /**
      * Returns the File extension.
      *
-     * @return string The File extension
+     * @return string|null The File extension
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/file-folder.html#File::ext
      */
-    public function ext()
+    public function ext(): ?string
     {
         if (!$this->info) {
             $this->info();
@@ -459,16 +411,16 @@ class File
         if (isset($this->info['extension'])) {
             return $this->info['extension'];
         }
-        return false;
+        return null;
     }
     
     /**
      * Returns the File name without extension.
      *
-     * @return string The File name without extension.
+     * @return string|null The File name without extension.
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/file-folder.html#File::name
      */
-    public function name()
+    public function name(): ?string
     {
         if (!$this->info) {
             $this->info();
@@ -478,18 +430,18 @@ class File
         } elseif ($this->name) {
             return $this->name;
         }
-        return false;
+        return null;
     }
     
     /**
      * makes filename safe for saving
      *
-     * @param string $name The name of the file to make safe if different from $this->name
-     * @param string $ext The name of the extension to make safe if different from $this->ext
+     * @param string|null $name The name of the file to make safe if different from $this->name
+     * @param string|null $ext The name of the extension to make safe if different from $this->ext
      * @return string $ext the extension of the file
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/file-folder.html#File::safe
      */
-    public function safe($name = null, $ext = null)
+    public function safe(?string $name = null, ?string $ext = null): string
     {
         if (!$name) {
             $name = $this->name;
@@ -503,13 +455,13 @@ class File
     /**
      * Get md5 Checksum of file with previous check of Filesize
      *
-     * @param integer|boolean $maxsize in MB or true to force
-     * @return string md5 Checksum {@link http://php.net/md5_file See md5_file()}
+     * @param int|null $maxsize in MB or null to force
+     * @return string|null md5 Checksum {@link http://php.net/md5_file See md5_file()}
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/file-folder.html#File::md5
      */
-    public function md5($maxsize = 5)
+    public function md5(?int $maxsize = 5): ?string
     {
-        if ($maxsize === true) {
+        if ($maxsize === null) {
             return md5_file($this->path);
         }
         
@@ -518,7 +470,7 @@ class File
             return md5_file($this->path);
         }
         
-        return false;
+        return null;
     }
     
     /**
@@ -527,7 +479,7 @@ class File
      * @return string Full path to file
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/file-folder.html#File::pwd
      */
-    public function pwd()
+    public function pwd(): string
     {
         if (is_null($this->path)) {
             $this->path = $this->Folder->slashTerm($this->Folder->pwd()) . $this->name;
@@ -541,13 +493,9 @@ class File
      * @return boolean true if it exists, false otherwise
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/file-folder.html#File::exists
      */
-    public function exists()
+    public function exists(): bool
     {
-        if (version_compare(PHP_VERSION, '5.3.0') >= 0) {
-            clearstatcache(true, $this->path);
-        } else {
-            clearstatcache();
-        }
+        clearstatcache(true, $this->path);
         return (file_exists($this->path) && is_file($this->path));
     }
     
@@ -557,26 +505,28 @@ class File
      * @return string Permissions for the file
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/file-folder.html#File::perms
      */
-    public function perms()
+    public function perms(): ?string
     {
         if ($this->exists()) {
-            return substr(sprintf('%o', fileperms($this->path)), -4);
+            $ret = substr(sprintf('%o', fileperms($this->path)), -4);
+            return $ret === false ? null : $ret;
         }
-        return false;
+        return null;
     }
     
     /**
      * Returns the Filesize
      *
-     * @return integer size of the file in bytes, or false in case of an error
+     * @return int|null size of the file in bytes, or false in case of an error
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/file-folder.html#File::size
      */
-    public function size()
+    public function size(): ?int
     {
         if ($this->exists()) {
-            return filesize($this->path);
+            $ret = filesize($this->path);
+            return $ret === false ? null : $ret;
         }
-        return false;
+        return null;
     }
     
     /**
@@ -585,7 +535,7 @@ class File
      * @return boolean true if its writable, false otherwise
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/file-folder.html#File::writable
      */
-    public function writable()
+    public function writable(): bool
     {
         return is_writable($this->path);
     }
@@ -596,7 +546,7 @@ class File
      * @return boolean true if its executable, false otherwise
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/file-folder.html#File::executable
      */
-    public function executable()
+    public function executable(): bool
     {
         return is_executable($this->path);
     }
@@ -607,7 +557,7 @@ class File
      * @return boolean true if file is readable, false otherwise
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/file-folder.html#File::readable
      */
-    public function readable()
+    public function readable(): bool
     {
         return is_readable($this->path);
     }
@@ -615,57 +565,61 @@ class File
     /**
      * Returns the File's owner.
      *
-     * @return integer the Fileowner
+     * @return int|null the Fileowner
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/file-folder.html#File::owner
      */
-    public function owner()
+    public function owner(): ?int
     {
         if ($this->exists()) {
-            return fileowner($this->path);
+            $ret = fileowner($this->path);
+            return $ret === false ? null : $ret;
         }
-        return false;
+        return null;
     }
     
     /**
      * Returns the File's group.
      *
-     * @return integer the Filegroup
+     * @return int|null the Filegroup
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/file-folder.html#File::group
      */
-    public function group()
+    public function group(): ?int
     {
         if ($this->exists()) {
-            return filegroup($this->path);
+            $ret = filegroup($this->path);
+            return $ret === false ? null : $ret;
         }
-        return false;
+        return null;
     }
     
     /**
      * Returns last access time.
      *
-     * @return integer timestamp Timestamp of last access time
+     * @return int|null timestamp Timestamp of last access time
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/file-folder.html#File::lastAccess
      */
-    public function lastAccess()
+    public function lastAccess(): ?int
     {
         if ($this->exists()) {
-            return fileatime($this->path);
+            $ret = fileatime($this->path);
+            return $ret === false ? null : $ret;
         }
-        return false;
+        return null;
     }
     
     /**
      * Returns last modified time.
      *
-     * @return integer timestamp Timestamp of last modification
+     * @return int|null timestamp Timestamp of last modification
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/file-folder.html#File::lastChange
      */
-    public function lastChange()
+    public function lastChange(): ?int
     {
         if ($this->exists()) {
-            return filemtime($this->path);
+            $ret = filemtime($this->path);
+            return $ret === false ? null : $ret;
         }
-        return false;
+        return null;
     }
     
     /**
@@ -674,7 +628,7 @@ class File
      * @return Folder Current folder
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/file-folder.html#File::Folder
      */
-    public function folder()
+    public function folder(): ?Folder
     {
         return $this->Folder;
     }
@@ -684,17 +638,17 @@ class File
      *
      * @param string $dest destination for the copy
      * @param boolean $overwrite Overwrite $dest if exists
-     * @param boolean|int|string $permissions file access (0666 for example to rw permissions to all)
+     * @param int|null $permissions file access (0666 for example to rw permissions to all)
      * @return boolean Success
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/file-folder.html#File::copy
      */
-    public function copy($dest, $overwrite = true, $permissions = false)
+    public function copy(string $dest, bool $overwrite = true, ?int $permissions = null): bool
     {
         if (!$this->exists() || (is_file($dest) && !$overwrite)) {
             return false;
         }
         $ret = copy($this->path, $dest);
-        if ($permissions && $ret) {
+        if ($permissions !== null && $ret) {
             $file = new File($dest);
             $file->chmod($permissions);
         }
@@ -705,10 +659,10 @@ class File
      * Copy the File to $dest
      *
      * @param string $dest destination for the copy
-     * @param boolean|int|string $permissions file access (0666 for example to rw permissions to all)
+     * @param int|null $permissions file access (0666 for example to rw permissions to all)
      * @return boolean|File - bool (false): fail | File: new file
      */
-    public function move($dest, $permissions = false)
+    public function move(string $dest, ?int $permissions = null)
     {
         if (!$this->exists()) {
             return false;
@@ -725,19 +679,19 @@ class File
             $destFile->delete();
         }
         rename($this->path, $destFile->path);
-        if ($permissions) {
+        if ($permissions !== null) {
             $destFile->chmod($permissions);
         }
         return $destFile;
     }
     
     /**
-     * change file permissions
-     * @param bool|int|string $permissions
+     * Change file permissions
+     * @param int|null $permissions
      */
-    public function chmod($permissions = false)
+    public function chmod(int $permissions): void
     {
-        if ($permissions && $this->exists()) {
+        if ($this->exists()) {
             $old = umask(0);
             chmod($this->path, $permissions);
             umask($old);
@@ -748,12 +702,12 @@ class File
      * Get the mime type of the file. Uses the finfo extension if
      * its available, otherwise falls back to mime_content_type
      *
-     * @return false|string The mimetype of the file, or false if reading fails.
+     * @return null|string The mimetype of the file, or false if reading fails.
      */
-    public function mime()
+    public function mime(): ?string
     {
         if (!$this->exists()) {
-            return false;
+            return null;
         }
         // there's a bug that doesn't properly detect
         // the mime type of css files
@@ -1465,12 +1419,13 @@ class File
             return $mime_type[$extension];
         } elseif (function_exists('finfo_open')) {
             $finfo = finfo_open(FILEINFO_MIME);
-            list($type,) = explode(';', finfo_file($finfo, $this->pwd()));
+            [$type,] = explode(';', finfo_file($finfo, $this->pwd()));
             return $type;
         } elseif (function_exists('mime_content_type')) {
-            return mime_content_type($this->pwd());
+            $ret = mime_content_type($this->pwd());
+            return $ret === false ? null : $ret;
         }
-        return false;
+        return null;
     }
     
 }
