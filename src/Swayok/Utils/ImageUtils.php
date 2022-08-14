@@ -17,11 +17,7 @@ abstract class ImageUtils
 //        "image/bmp" => "bmp",
     ];
     
-    /**
-     * @return ImageVersionConfig
-     * @throws Exception\ImageVersionConfigException
-     */
-    public static function getDefaultOriginalFileVersionConfig()
+    public static function getDefaultOriginalFileVersionConfig(): ImageVersionConfig
     {
         return ImageVersionConfig::create()
             ->setWidth(1920)
@@ -37,13 +33,17 @@ abstract class ImageUtils
      * @param string $imagesPath - folder to save images in
      * @param string $baseFileNameWithoutExtension - base file name (used as prefix for resized file name)
      * @param ImageVersionConfig[] $imageVersionsConfigs - set of resize settings
-     * @return array - false: file's content type not supported | true: saved & resized
+     * @return array - list of resized files names with versions names as keys
      * @throws ImageUtilsException
      */
-    public static function resize(array $uploadedFileInfo, $imagesPath, $baseFileNameWithoutExtension, array $imageVersionsConfigs)
-    {
+    public static function resize(
+        array $uploadedFileInfo,
+        string $imagesPath,
+        string $baseFileNameWithoutExtension,
+        array $imageVersionsConfigs
+    ): array {
         $contentType = self::getContentTypeForUploadedFile($uploadedFileInfo);
-        if (!self::isContentTypeSupported($contentType) || empty($imagesPath) || empty($baseFileNameWithoutExtension)) {
+        if (empty($imagesPath) || empty($baseFileNameWithoutExtension) || !self::isContentTypeSupported($contentType)) {
             throw new ImageUtilsException('Uploaded image type is not supported', 403);
         }
         if (is_dir($imagesPath)) {
@@ -85,10 +85,8 @@ abstract class ImageUtils
     
     /**
      * Delete all image files that match $fileNameRegexp
-     * @param string $imagesPath ,
-     * @param string $fileNameRegexp
      */
-    public static function deleteExistingFiles($imagesPath, $fileNameRegexp)
+    public static function deleteExistingFiles(string $imagesPath, string $fileNameRegexp): void
     {
         if (is_dir($imagesPath)) {
             $files = scandir($imagesPath);
@@ -109,8 +107,12 @@ abstract class ImageUtils
      * @param string $contentType - jpeg|png|gif, etc
      * @return string - resized file extension
      */
-    protected static function applyResize($srcFilePath, $newFilePath, ImageVersionConfig $imageVersionConfig, $contentType)
-    {
+    protected static function applyResize(
+        string $srcFilePath,
+        string $newFilePath,
+        ImageVersionConfig $imageVersionConfig,
+        string $contentType
+    ): string {
         $resizeInfo = self::getOptimizedImageSizes($srcFilePath, $imageVersionConfig);
         if ($imageVersionConfig->isContentTypeConvertRequired()) {
             $contentType = 'image/' . $imageVersionConfig->getContentTypeToConvertTo();
@@ -119,7 +121,7 @@ abstract class ImageUtils
         $newFilePath .= $ext;
         if (!$resizeInfo['resize']) {
             // resizing is not allowed or not required
-            if ($srcFilePath != $newFilePath) {
+            if ($srcFilePath !== $newFilePath) {
                 File::load($srcFilePath)
                     ->copy($newFilePath, true, 0666);
             }
@@ -128,8 +130,8 @@ abstract class ImageUtils
             $skipResize = false;
             if (file_exists($newFilePath)) {
                 // check dimensions
-                list($exWidth, $exHeight) = getimagesize($newFilePath);
-                $skipResize = ($exWidth == $resizeInfo['new_width'] && $exHeight == $resizeInfo['new_height']);
+                [$exWidth, $exHeight] = getimagesize($newFilePath);
+                $skipResize = ($exWidth === $resizeInfo['new_width'] && $exHeight === $resizeInfo['new_height']);
                 // check if up to date
                 if ($skipResize && (@filemtime($newFilePath) < @filemtime($srcFilePath))) {
                     $skipResize = false;
@@ -157,7 +159,7 @@ abstract class ImageUtils
      * 'x' => int, 'y' => int,     //< resized image positioning
      * )
      */
-    protected static function getOptimizedImageSizes($filePath, ImageVersionConfig $imageVersionConfig)
+    protected static function getOptimizedImageSizes(string $filePath, ImageVersionConfig $imageVersionConfig): array
     {
         $types = [1 => "gif", "jpeg", "png", "swf", "psd", "wbmp"]; // used to determine image type
         $resizeInfo = [
@@ -172,7 +174,7 @@ abstract class ImageUtils
                 ? $imageVersionConfig->getContentTypeToConvertTo()
                 : false,
         ];
-        list($resizeInfo['original_width'], $resizeInfo['original_height'], $resizeInfo['type']) = getimagesize($filePath);
+        [$resizeInfo['original_width'], $resizeInfo['original_height'], $resizeInfo['type']] = getimagesize($filePath);
         $resizeInfo['type'] = $types[$resizeInfo['type']];
         $resizeInfo['lossless_width'] = $resizeInfo['new_width'] = $resizeInfo['original_width'];
         $resizeInfo['lossless_height'] = $resizeInfo['new_height'] = $resizeInfo['original_height'];
@@ -187,16 +189,19 @@ abstract class ImageUtils
             return $resizeInfo;
         }
         // exit if image is too small and enlarge is not allowed
+        /** @noinspection NotOptimalIfConditionsInspection */
         if (
             !$imageVersionConfig->isEnlargeAllowed()
             && (
                 (
                     $resizeInfo['original_width'] < $resizeInfo['fit_width']
                     && $resizeInfo['original_height'] < $resizeInfo['fit_height']
-                ) || (
+                )
+                || (
                     $resizeInfo['original_width'] < $resizeInfo['fit_width']
                     && empty($resizeInfo['fit_height'])
-                ) || (
+                )
+                || (
                     $resizeInfo['original_height'] < $resizeInfo['fit_height']
                     && empty($resizeInfo['fit_width'])
                 )
@@ -221,16 +226,16 @@ abstract class ImageUtils
             $resizeInfo['fit_height'] = round($resizeInfo['original_height'] * $aspectRatio);
             $resizeInfo['fit_height_upd'] = $resizeInfo['fit_height'];
         } elseif ($imageVersionConfig->isCropAllowed()) {
-            $aspectRatio = ($testHeight < $resizeInfo['fit_height'] || $testWidth == $resizeInfo['fit_width']) ? $aspectByHeight : $aspectByWidth;
+            $aspectRatio = ($testHeight < $resizeInfo['fit_height'] || $testWidth === $resizeInfo['fit_width']) ? $aspectByHeight : $aspectByWidth;
         } else {
             $aspectRatio = ($testHeight < $resizeInfo['fit_height'] || $testWidth > $resizeInfo['fit_width']) ? $aspectByWidth : $aspectByHeight;
         }
         // count new dimensions
-        $resizeInfo['lossless_width'] = round($resizeInfo['original_width'] * $aspectRatio, 0);
+        $resizeInfo['lossless_width'] = round($resizeInfo['original_width'] * $aspectRatio);
         $resizeInfo['new_width'] = $imageVersionConfig->isCropAllowed()
             ? $resizeInfo['fit_width']
             : $resizeInfo['lossless_width'];
-        $resizeInfo['lossless_height'] = round($resizeInfo['original_height'] * $aspectRatio, 0);
+        $resizeInfo['lossless_height'] = round($resizeInfo['original_height'] * $aspectRatio);
         $resizeInfo['new_height'] = $imageVersionConfig->isCropAllowed()
             ? $resizeInfo['fit_height']
             : $resizeInfo['lossless_height'];
@@ -249,8 +254,12 @@ abstract class ImageUtils
      * @param array $resizeInfo - information received from $this->getOptimizedImageSizes()
      * @param ImageVersionConfig $imageVersionConfig
      */
-    public static function resizeImage($srcFilePath, $resizedFilePath, $resizeInfo, ImageVersionConfig $imageVersionConfig)
-    {
+    public static function resizeImage(
+        string $srcFilePath,
+        string $resizedFilePath,
+        array $resizeInfo,
+        ImageVersionConfig $imageVersionConfig
+    ): void {
         $srcImage = call_user_func('imagecreatefrom' . $resizeInfo['type'], $srcFilePath);
         if (function_exists("imagecreatetruecolor")) {
             $resizedImage = imagecreatetruecolor($resizeInfo['new_width'], $resizeInfo['new_height']);
@@ -308,11 +317,12 @@ abstract class ImageUtils
      * @param int $degrees - clockwise
      * @return bool
      */
-    public static function rotate($filePath, $fileType, $degrees, $newFilePath = null)
+    public static function rotate(string $filePath, string $fileType, int $degrees, ?string $newFilePath = null): bool
     {
-        if (empty($degrees)) {
+        $degrees %= 360;
+        if ($degrees === 0) {
             return true;
-        } elseif ((int)$degrees && !empty($filePath) && file_exists($filePath) && !is_dir($filePath)) {
+        } elseif (!empty($filePath) && file_exists($filePath) && !is_dir($filePath)) {
             $srcImage = call_user_func('imagecreatefrom' . $fileType, $filePath);
             $resultImage = imagerotate($srcImage, $degrees * -1, 0);
             imagedestroy($srcImage);
@@ -326,7 +336,7 @@ abstract class ImageUtils
                 imagedestroy($resultImage);
             }
             
-            return !!$resultImage;
+            return (bool)$resultImage;
         }
         return false;
     }
@@ -336,7 +346,7 @@ abstract class ImageUtils
      * @param array $fileInfo - data from $_FILES
      * @return bool
      */
-    public static function isImage($fileInfo)
+    public static function isImage(array $fileInfo): bool
     {
         return !empty($fileInfo) && !empty($fileInfo['size']) && self::isContentTypeSupported($fileInfo['type']);
     }
@@ -346,7 +356,7 @@ abstract class ImageUtils
      * @param array $fileInfo - uploaded file info provided by CakePHP. Should contain 'type', 'name' and 'tmp_name' keys
      * @return string
      */
-    public static function getContentTypeForUploadedFile($fileInfo)
+    public static function getContentTypeForUploadedFile(array $fileInfo): string
     {
         if (
             !self::isContentTypeSupported($fileInfo['type'])
@@ -360,41 +370,27 @@ abstract class ImageUtils
     
     /**
      * Verify if content type is supported
-     * @param string $contentType
-     * @return bool
      */
-    public static function isContentTypeSupported($contentType)
+    public static function isContentTypeSupported(string $contentType): bool
     {
         return array_key_exists($contentType, self::$contentTypeToExtension);
     }
     
     /**
      * Resolve file's content type to its extension
-     * @param string $contentType
-     * @return bool
      */
-    public static function getExtensionByContentType($contentType)
+    public static function getExtensionByContentType(string $contentType): ?string
     {
-        if (isset(self::$contentTypeToExtension[$contentType])) {
-            return self::$contentTypeToExtension[$contentType];
-        } else {
-            return false;
-        }
+        return self::$contentTypeToExtension[$contentType] ?? null;
     }
     
     /**
      * Resolve file's content type to its extension
-     * @param string $ext
-     * @return bool
      */
-    public static function getContentTypeByExtension($ext)
+    public static function getContentTypeByExtension(string $ext): ?string
     {
         $extToContentType = array_flip(self::$contentTypeToExtension);
-        if (isset($extToContentType[$ext])) {
-            return $extToContentType[$ext];
-        } else {
-            return false;
-        }
+        return $extToContentType[$ext] ?? null;
     }
     
     /**
@@ -403,17 +399,21 @@ abstract class ImageUtils
      * @param string $baseFileName
      * @param string $imagesPath
      * @param ImageVersionConfig[] $imageVersionsConfigs
-     * @return bool|string - false: fail | string: created file path
+     * @return null|string - null: fail | string: created file path
      */
-    public static function restoreVersion($fileNameToRestore, $baseFileName, $imagesPath, array $imageVersionsConfigs)
-    {
+    public static function restoreVersion(
+        string $fileNameToRestore,
+        string $baseFileName,
+        string $imagesPath,
+        array $imageVersionsConfigs
+    ): ?string {
         $originalFileName = $baseFileName;
         $ext = self::findFileExtension($imagesPath, $originalFileName);
         if ($ext) {
             $originalFileName .= '.' . $ext;
             foreach ($imageVersionsConfigs as $versionName => $imageVersionConfig) {
                 $versionFileName = $baseFileName . $imageVersionConfig->getFileNameSuffix($versionName);
-                if ($fileNameToRestore == $versionFileName) {
+                if ($fileNameToRestore === $versionFileName) {
                     $extToContentType = array_flip(self::$contentTypeToExtension);
                     $contentType = $extToContentType[$ext];
                     $ext = self::findFileExtension($imagesPath, $versionFileName);
@@ -429,18 +429,24 @@ abstract class ImageUtils
                 }
             }
         }
-        return false;
+        return null;
     }
     
     /**
+     * @param string $versionName
      * @param ImageVersionConfig $versionConfig
      * @param string $baseFileName
      * @param string $imagesPath
-     * @param null|string $fileExtension
-     * @return string|bool - false - source file not exists
+     * @param string|null $fileExtension
+     * @return string|null - null - source file not exists
      */
-    public static function restoreVersionForConfig($versionName, ImageVersionConfig $versionConfig, $baseFileName, $imagesPath, $fileExtension = null)
-    {
+    public static function restoreVersionForConfig(
+        string $versionName,
+        ImageVersionConfig $versionConfig,
+        string $baseFileName,
+        string $imagesPath,
+        ?string $fileExtension = null
+    ): ?string {
         $extToContentType = array_flip(self::$contentTypeToExtension);
         if (!$fileExtension) {
             $contentType = $versionConfig->getContentTypeToConvertTo();
@@ -450,7 +456,7 @@ abstract class ImageUtils
         $versionFileName = $baseFileName . $versionConfig->getFileNameSuffix($versionName);
         $srcFile = $imagesPath . $baseFileName . '.' . self::findFileExtension($imagesPath, $baseFileName);
         if (!File::exist($srcFile)) {
-            return false;
+            return null;
         }
         $ext = self::applyResize(
             $imagesPath . $baseFileName . '.' . self::findFileExtension($imagesPath, $baseFileName),
@@ -469,8 +475,12 @@ abstract class ImageUtils
      * @param ImageVersionConfig[] $imageVersionsConfigs
      * @return array
      */
-    public static function getVersionsUrls($imagesPath, $imagesBaseUrl, $fileName, array $imageVersionsConfigs)
-    {
+    public static function getVersionsUrls(
+        string $imagesPath,
+        string $imagesBaseUrl,
+        string $fileName,
+        array $imageVersionsConfigs
+    ): array {
         $originalFileName = $fileName;
         $ext = self::findFileExtension($imagesPath, $originalFileName);
         $result = [ImageVersionConfig::SOURCE_VERSION_NAME => $imagesBaseUrl . $originalFileName];
@@ -498,8 +508,11 @@ abstract class ImageUtils
      * @param ImageVersionConfig[] $imageVersionsConfigs
      * @return array
      */
-    public static function getVersionsPaths($imagesPath, $fileName, array $imageVersionsConfigs)
-    {
+    public static function getVersionsPaths(
+        string $imagesPath,
+        string $fileName,
+        array $imageVersionsConfigs
+    ): array {
         $originalFileName = $fileName;
         $ext = self::findFileExtension($imagesPath, $originalFileName);
         $result = [ImageVersionConfig::SOURCE_VERSION_NAME => ''];
@@ -521,13 +534,10 @@ abstract class ImageUtils
     
     /**
      * Find file extesion among allowed file extensions
-     * @param string $imagesPath
-     * @param string $originalFileName
-     * @return bool|string
      */
-    protected static function findFileExtension($imagesPath, $originalFileName)
+    protected static function findFileExtension(string $imagesPath, string $originalFileName): ?string
     {
-        $ext = false;
+        $ext = null;
         foreach (array_unique(self::$contentTypeToExtension) as $testExt) {
             if (File::exist(rtrim($imagesPath, '\\/') . DIRECTORY_SEPARATOR . $originalFileName . '.' . $testExt)) {
                 $ext = $testExt;
@@ -539,10 +549,8 @@ abstract class ImageUtils
     
     /**
      * Get regexp that will match required files
-     * @param $fileName
-     * @return string
      */
-    public static function getFileNamesRegexp($fileName)
+    public static function getFileNamesRegexp(string $fileName): string
     {
         return "%^($fileName-.*?(\d+)x(\d+)|" . $fileName . ')%is';
     }

@@ -23,36 +23,32 @@ class ImageVersionConfig
     private $allowEnlarge = false;
     
     /**
-     * @var bool|string - 'jpeg', 'png', 'gif'
+     * @var null|string - 'jpeg', 'png', 'gif'
      */
-    private $contentTypeToConvertTo = false;
-    const FORMAT_JPEG = 'jpeg';
-    const FORMAT_PNG = 'png';
-    const FORMAT_GIF = 'gif';
+    private $contentTypeToConvertTo = null;
+    public const FORMAT_JPEG = 'jpeg';
+    public const FORMAT_PNG = 'png';
+    public const FORMAT_GIF = 'gif';
     private $jpegQuality = 90;
     private $pngQuality = 5;
     
-    const SOURCE_VERSION_NAME = 'source';
+    public const SOURCE_VERSION_NAME = 'source';
     
     public static function create()
     {
-        return new ImageVersionConfig();
+        return new static();
     }
     
-    /**
-     * @return int|null
-     */
-    public function getWidth()
+    public function getWidth(): ?int
     {
         return $this->width;
     }
     
     /**
-     * @param int|null $width
-     * @return $this
+     * @return static
      * @throws ImageVersionConfigException
      */
-    public function setWidth($width)
+    public function setWidth(?int $width)
     {
         if ($width !== null && (!ValidateValue::isFloat($width, true) || $width < 0)) {
             throw new ImageVersionConfigException('Width should be a positive number, 0 or null');
@@ -61,20 +57,16 @@ class ImageVersionConfig
         return $this;
     }
     
-    /**
-     * @return int|null
-     */
-    public function getHeight()
+    public function getHeight(): ?int
     {
         return $this->height;
     }
     
     /**
-     * @param int|null $height
-     * @return $this
+     * @return static
      * @throws ImageVersionConfigException
      */
-    public function setHeight($height)
+    public function setHeight(?int $height)
     {
         if ($height !== null && (!ValidateValue::isFloat($height, true) || $height < 0)) {
             throw new ImageVersionConfigException('Height should be a positive integer, 0 or null');
@@ -83,16 +75,13 @@ class ImageVersionConfig
         return $this;
     }
     
-    /**
-     * @return boolean
-     */
-    public function isCropAllowed()
+    public function isCropAllowed(): bool
     {
         return $this->allowCrop;
     }
     
     /**
-     * @return $this
+     * @return static
      */
     public function allowCrop()
     {
@@ -101,7 +90,7 @@ class ImageVersionConfig
     }
     
     /**
-     * @return $this
+     * @return static
      */
     public function disallowCrop()
     {
@@ -109,16 +98,13 @@ class ImageVersionConfig
         return $this;
     }
     
-    /**
-     * @return boolean
-     */
-    public function isCenteringAllowed()
+    public function isCenteringAllowed(): bool
     {
         return $this->allowCentering;
     }
     
     /**
-     * @return $this
+     * @return static
      */
     public function allowCentering()
     {
@@ -127,7 +113,7 @@ class ImageVersionConfig
     }
     
     /**
-     * @return $this
+     * @return static
      */
     public function disallowCentering()
     {
@@ -135,16 +121,13 @@ class ImageVersionConfig
         return $this;
     }
     
-    /**
-     * @return boolean
-     */
-    public function isEnlargeAllowed()
+    public function isEnlargeAllowed(): bool
     {
         return $this->allowEnlarge;
     }
     
     /**
-     * @return $this
+     * @return static
      */
     public function allowEnlarge()
     {
@@ -153,7 +136,7 @@ class ImageVersionConfig
     }
     
     /**
-     * @return $this
+     * @return static
      */
     public function disallowEnlarge()
     {
@@ -161,52 +144,42 @@ class ImageVersionConfig
         return $this;
     }
     
-    /**
-     * @return bool|string
-     */
-    public function getContentTypeToConvertTo()
+    public function getContentTypeToConvertTo(): ?string
     {
         return $this->contentTypeToConvertTo;
     }
     
-    /**
-     * @return bool
-     */
-    public function isContentTypeConvertRequired()
+    public function isContentTypeConvertRequired(): bool
     {
         return !empty($this->contentTypeToConvertTo);
     }
     
     /**
-     * @param bool|string $convertToContentType
-     * @return $this
+     * @return static
      * @throws ImageVersionConfigException
      */
-    public function setContentTypeToConvertTo($convertToContentType)
+    public function setContentTypeToConvertTo(?string $convertToContentType)
     {
-        if (empty($convertToContentType)) {
-            $this->contentTypeToConvertTo = false;
-        } elseif (!in_array($convertToContentType, [self::FORMAT_JPEG, self::FORMAT_GIF, self::FORMAT_PNG])) {
-            throw new ImageVersionConfigException('Invalid image format passed');
+        $this->contentTypeToConvertTo = null;
+        if (!empty($convertToContentType)) {
+            if (!in_array($convertToContentType, [self::FORMAT_JPEG, self::FORMAT_GIF, self::FORMAT_PNG])) {
+                throw new ImageVersionConfigException('Invalid image format passed');
+            }
+            $this->contentTypeToConvertTo = $convertToContentType;
         }
-        $this->contentTypeToConvertTo = $convertToContentType;
         return $this;
     }
     
-    /**
-     * @return int
-     */
-    public function getJpegQuality()
+    public function getJpegQuality(): int
     {
         return $this->jpegQuality;
     }
     
     /**
-     * @param int $jpegQuality
-     * @return $this
+     * @return static
      * @throws ImageVersionConfigException
      */
-    public function setJpegQuality($jpegQuality)
+    public function setJpegQuality(int $jpegQuality)
     {
         if (!ValidateValue::isInteger($jpegQuality, true) || $jpegQuality <= 0 || $jpegQuality > 100) {
             throw new ImageVersionConfigException('JPEQ image quality should be within 1 and 100');
@@ -215,20 +188,16 @@ class ImageVersionConfig
         return $this;
     }
     
-    /**
-     * @return int
-     */
-    public function getPngQuality()
+    public function getPngQuality(): int
     {
         return $this->pngQuality;
     }
     
     /**
-     * @param int $pngQuality
-     * @return $this
+     * @return static
      * @throws ImageVersionConfigException
      */
-    public function setPngQuality($pngQuality)
+    public function setPngQuality(int $pngQuality)
     {
         if (!ValidateValue::isInteger($pngQuality, true) || $pngQuality <= 0 || $pngQuality > 9) {
             throw new ImageVersionConfigException('PNG image quality should be within 1 and 9');
@@ -237,11 +206,7 @@ class ImageVersionConfig
         return $this;
     }
     
-    /**
-     * @param string $versionName
-     * @return string
-     */
-    public function getFileNameSuffix($versionName = '')
+    public function getFileNameSuffix(string $versionName = ''): string
     {
         $optionsSummary = $this->getWidth() . 'x' . $this->getHeight() . '-'
             . ($this->isCropAllowed() ? 'crp' : 'ncrp') . '-' . ($this->isCenteringAllowed() ? 'cen' : 'ncen') . '-'
