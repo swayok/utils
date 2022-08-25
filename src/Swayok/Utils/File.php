@@ -479,9 +479,9 @@ class File
      * @return string Full path to file
      * @link http://book.cakephp.org/2.0/en/core-utility-libraries/file-folder.html#File::pwd
      */
-    public function pwd(): string
+    public function pwd(): ?string
     {
-        if (is_null($this->path)) {
+        if (is_null($this->path) && $this->Folder->exists()) {
             $this->path = $this->Folder->slashTerm($this->Folder->pwd()) . $this->name;
         }
         return $this->path;
