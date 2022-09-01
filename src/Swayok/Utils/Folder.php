@@ -559,7 +559,23 @@ class Folder
         
         if ($this->create($nextPathname, $folderAccess) && !file_exists($pathname)) {
             $old = umask(0);
-            if (mkdir($pathname, $folderAccess)) {
+            try {
+                $created = mkdir($pathname, $folderAccess);
+            } catch (\ErrorException $exception) {
+                if ($exception->getMessage() === 'mkdir(): Permission denied') {
+                    throw new \ErrorException(
+                        "mkdir($pathname): Permission denied",
+                        $exception->getCode(),
+                        $exception->getSeverity(),
+                        $exception->getFile(),
+                        $exception->getLine(),
+                        $exception
+                    );
+                }
+                throw $exception;
+            }
+            /** @noinspection PhpIfWithCommonPartsInspection */
+            if ($created) {
                 umask($old);
                 $this->_messages[] = sprintf('%s created', $pathname);
                 return true;
