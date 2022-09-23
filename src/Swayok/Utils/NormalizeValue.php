@@ -73,7 +73,7 @@ abstract class NormalizeValue
         } elseif (is_string($value) && preg_match('%^".*"$%', $value) && json_decode($value) !== null) {
             return $value;
         } else {
-            return !is_string($value) && ValidateValue::isFloat($value) ? "$value" : json_encode($value, JSON_UNESCAPED_UNICODE);
+            return !is_string($value) && ValidateValue::isFloat($value) ? "$value" : json_encode($value, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
         }
     }
     
